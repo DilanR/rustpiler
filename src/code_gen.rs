@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     ast::*,
+    common::Eval,
     error::{Error, TypeError},
 };
 use mips::{
@@ -106,10 +107,16 @@ impl CodeGenEnv {
     }
 
     pub fn define_function_label(&mut self, id: &str) {
+        self.label_count += 1;
+        let label = if id != "main" {
+            format!("fn_{}_{}", self.label_count, id)
+        } else {
+            id.to_string()
+        };
         self.labels
             .last_mut()
             .unwrap()
-            .insert(id.to_string(), format!("fn_{}", id));
+            .insert(id.to_string(), label);
     }
 
     pub fn define_label(&mut self, id: &str) -> String {
@@ -354,8 +361,10 @@ impl CodegenVm {
                 .insert(param.id.clone(), offset);
         }
 
+        // TODO: fetch correct label for shadowing
         // label for bal
-        self.env.add_nop_with_label(&format!("fn_{}", fn_decl.id));
+        let fn_label = self.env.lookup_label(&fn_decl.id)?;
+        self.env.add_nop_with_label(&fn_label);
         let local_alloc_idx = self.emit_fn_prologue();
 
         self.codegen_block(&fn_decl.body)?;
@@ -433,41 +442,34 @@ impl Default for CodegenVm {
     }
 }
 
-//No point in doing Eval, the r
-pub trait CodeGen {
-    fn codegen(&self) -> Result<Mips, Error>;
-}
-
-impl CodeGen for Expr {
-    fn codegen(&self) -> Result<Mips, Error> {
+impl Eval<Vec<Instr>> for Expr {
+    fn eval(&self) -> Result<Vec<Instr>, Error> {
         let mut cg = CodegenVm::new();
         cg.codegen_expr(self)?;
-        Ok(cg.run())
+        Ok(cg.env.instructions.clone())
     }
 }
 
-impl CodeGen for Block {
-    fn codegen(&self) -> Result<Mips, Error> {
+impl Eval<Vec<Instr>> for Block {
+    fn eval(&self) -> Result<Vec<Instr>, Error> {
         let mut cg = CodegenVm::new();
         cg.codegen_block_expr(self)?;
-        Ok(cg.run())
+        Ok(cg.env.instructions.clone())
     }
 }
 
-impl CodeGen for Prog {
-    fn codegen(&self) -> Result<Mips, Error> {
+impl Eval<Vec<Instr>> for Prog {
+    fn eval(&self) -> Result<Vec<Instr>, Error> {
         let mut cg = CodegenVm::new();
         for fn_decl in self.0.iter() {
             cg.env.define_function_label(&fn_decl.id);
         }
-        // start at main
-        cg.env.add_instr(b_label("fn_main")); // Should exists
 
-        // gen all fn bodies
+        let main_label = cg.env.lookup_label("main")?;
+        cg.env.add_instr(b_label(&main_label));
         for fn_decl in &self.0 {
             cg.codegen_fn_decl(fn_decl)?;
         }
-
-        Ok(cg.run())
+        Ok(cg.env.instructions.clone())
     }
 }

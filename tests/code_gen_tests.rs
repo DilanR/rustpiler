@@ -1,17 +1,29 @@
+use mips::instr::Instr;
+use mips::instrs::Instrs;
 use mips::rf::Reg::t0;
+use mips::vm::Mips;
 use rnr::ast::*;
-use rnr::common::codegen_test;
+use rnr::common::codegen_instrs;
 
 fn run_expr_i32(src: &str) -> i32 {
-    codegen_test::<Expr>(src).unwrap().rf.get(t0) as i32
+    let instrs = codegen_instrs::<Expr>(src).unwrap();
+    run_instrs(instrs).rf.get(t0) as i32
 }
 
 fn run_block_i32(src: &str) -> i32 {
-    codegen_test::<Block>(src).unwrap().rf.get(t0) as i32
+    let instrs = codegen_instrs::<Block>(src).unwrap();
+    run_instrs(instrs).rf.get(t0) as i32
 }
 
 fn run_prog_i32(src: &str) -> i32 {
-    codegen_test::<Prog>(src).unwrap().rf.get(t0) as i32
+    let instrs = codegen_instrs::<Prog>(src).unwrap();
+    run_instrs(instrs).rf.get(t0) as i32
+}
+
+fn run_instrs(instrs: Vec<Instr>) -> Mips {
+    let mut mips = Mips::new(Instrs::new_from_slice(&instrs));
+    mips.run().ok();
+    mips
 }
 
 #[cfg(test)]
@@ -90,6 +102,120 @@ mod codegen_block_test {
     }
 }
 
+#[cfg(test)]
+mod peer_review_alexander_pettersson {
+    use super::*;
+
+    #[test]
+    fn codegen_block_let_simple() {
+        // Tests: basic let-binding + reading locals inside main.
+        let src = r#"
+        fn main() -> i32 {
+            let a: i32 = 1;
+            let b: i32 = 2;
+            a + b
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 3);
+    }
+
+    #[test]
+    fn codegen_block_let_shadow() {
+        // Tests: variable shadowing should create new bindings.
+        let src = r#"
+        fn main() -> i32 {
+            let a = 1;
+            let b = 2;
+            let a = 3;
+            let b = 4;
+            a + b
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 7);
+    }
+
+    #[test]
+    fn codegen_local_block_scoping() {
+        // Tests: inner block scopes and variable isolation.
+        let src = r#"
+        fn main() -> i32 {
+            let a = 1;
+            let b = {
+                let b = a;
+                b + 2
+            };
+            b
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 3);
+    }
+
+    #[test]
+    fn codegen_local_fn_call() {
+        // Tests: calling a function defined inside main.
+        let src = r#"
+        fn main() -> i32 {
+            fn add(i: i32, j: i32) -> i32 { i + j }
+            add(10, 32)
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 42);
+    }
+
+    #[test]
+    fn codegen_int_comparisons_and_bool_ops() {
+        // Tests: <, >, == and boolean AND evaluation.
+        let src = r#"
+        fn main() -> i32 {
+            let b1 = 1 < 2;
+            let b2 = 2 > 1;
+            let b3 = 1 == 1;
+            if b1 && b2 && b3 { 1 } else { 0 }
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 1);
+    }
+
+    #[test]
+    fn codegen_while_loop() {
+        // Tests: while-loop execution and variable updates.
+        let src = r#"
+        fn main() -> i32 {
+            let mut a = 2;
+            let mut b = 0;
+            while a > 0 {
+                a = a - 1;
+                b = b + 1;
+            }
+            b
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 2);
+    }
+
+    #[test]
+    fn codegen_recursive_sum() {
+        // Tests: recursive calls + correct parameter passing.
+        let src = r#"
+        fn sum(n: i32) -> i32 {
+            if n == 0 { 0 } else { n + sum(n - 1) }
+        }
+        fn main() -> i32 {
+            sum(4)
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 10);
+    }
+}
+
+#[test]
+fn recursion_sum_yassine_taharaste() {
+    let src = "
+        fn main() { sum(3) }
+        fn sum(n: i32) -> i32 { if n == 0 { 0 } else { n + sum(n-1) } }
+    ";
+    assert_eq!(run_prog_i32(src), 6);
+}
 #[cfg(test)]
 mod codegen_prog_test {
     use super::*;
@@ -333,6 +459,21 @@ pub mod codegen_ai_tests {
                 inner(x) + 2
             }
             outer(3)
+        }
+        "#;
+        assert_eq!(run_prog_i32(src), 6);
+    }
+    #[test]
+    fn nested_local_function_is_scoped_and_callable_with_shadowing() {
+        let src = r#"
+        fn main() -> i32 {
+            fn inner() {};
+            fn outer(x: i32) -> i32 {
+                fn inner(y: i32) -> i32 { y + 1 }
+                inner(x) + 2
+            }
+            outer(3)
+
         }
         "#;
         assert_eq!(run_prog_i32(src), 6);

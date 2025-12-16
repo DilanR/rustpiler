@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::{ast::Type, error::Error};
 
 pub trait Eval<T: Clone> {
     fn eval(&self) -> Result<T, Error>
@@ -28,13 +28,12 @@ where
     Ok(v)
 }
 
-use crate::{ast::Type, code_gen::CodeGen};
-use mips::vm::Mips;
-
-pub fn codegen_test<T1>(s: &str) -> Result<Mips, Error>
+// emit instructions using Eval trait
+use mips::instr::Instr;
+pub fn codegen_instrs<T1>(s: &str) -> Result<Vec<Instr>, Error>
 where
-    T1: syn::parse::Parse + std::fmt::Display + CodeGen,
+    T1: syn::parse::Parse + std::fmt::Display + Eval<Vec<Instr>>,
 {
-    let bl = parse::<T1, Type>(s);
-    bl.codegen()
+    let ast = parse::<T1, Type>(s);
+    ast.eval()
 }
