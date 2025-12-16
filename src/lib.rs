@@ -14,6 +14,7 @@ pub mod test_util;
 pub mod ast;
 pub mod ast_traits;
 pub mod parse;
+pub mod cli;
 
 pub mod code_gen;
 pub mod env;
