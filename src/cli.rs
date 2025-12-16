@@ -27,7 +27,7 @@ pub struct Cli {
     #[arg(short = 'v', long = "virtual-machine", alias = "vm")]
     pub virtual_machine: bool,
 
-    /// perform code generation.
+    /// Perform code generation.
     #[arg(short = 'c', long = "code-gen", alias = "code_gen")]
     pub code_gen: bool,
 
