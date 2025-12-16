@@ -314,7 +314,7 @@ impl VM {
         Ok(Val::Lit(Literal::Unit))
     }
 
-    fn eval_prog(&mut self, prog: &Prog) -> Result<Val, Error> {
+    pub fn eval_prog(&mut self, prog: &Prog) -> Result<Val, Error> {
         //Add all function to root-level scope
         for func in &prog.0 {
             {

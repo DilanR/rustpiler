@@ -146,8 +146,13 @@ impl CodegenVm {
             env: CodeGenEnv::new(),
         }
     }
+    pub fn run_instrs(instrs: Vec<Instr>) -> Mips {
+        let mut mips = Mips::new(Instrs::new_from_slice(&instrs));
+        mips.run().ok();
+        mips
+    }
 
-    pub fn run(self) -> Mips {
+    pub fn run(&self) -> Mips {
         let mut mips = Mips::new(Instrs::new_from_slice(&self.env.instructions));
         mips.run().ok();
         mips
@@ -433,6 +438,22 @@ impl CodegenVm {
         self.env.pop_from_stack(ra);
         self.env.push_to_stack(t0);
         Ok(())
+    }
+
+    pub fn codegen_prog(&mut self, prog: &Prog) -> Result<(i32, Vec<Instr>), Error> {
+        for fn_decl in prog.0.iter() {
+            self.env.define_function_label(&fn_decl.id);
+        }
+
+        let main_label = self.env.lookup_label("main")?;
+        self.env.add_instr(b_label(&main_label));
+        for fn_decl in &prog.0 {
+            self.codegen_fn_decl(fn_decl)?;
+        }
+
+        let mips = self.run();
+        let result = mips.rf.get(t0) as i32;
+        Ok((result, self.env.instructions.clone()))
     }
 }
 

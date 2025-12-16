@@ -15,6 +15,7 @@ mips = { git = "https://vesuvio-git.neteq.ltu.se/pln/mips.git", features = [
   "env_log",
 ] }
 clap = { version = "4.5.53", features = ["derive"] }
+anyhow = "1.0.100"
 
 [dependencies.syn]
 features = ["full", "extra-traits"]

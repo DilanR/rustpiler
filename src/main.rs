@@ -2,5 +2,5 @@ use rnr::cli::Cli;
 
 fn main() {
     let cli = Cli::parse();
-    cli.execute();
+    let _ = cli.execute();
 }

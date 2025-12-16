@@ -1,23 +1,34 @@
 use std::path::{Path, PathBuf};
 
+use anyhow::Ok;
 use clap::{Parser, arg};
+use mips::instr::Instr;
+use mips::rf::Reg;
+use mips::vm::Mips;
+
+use crate::ast::Prog;
+use crate::code_gen::CodegenVm;
+use crate::common::{Eval, codegen_instrs};
+use crate::type_check::TypeChecker;
+use crate::vm::VM;
+use crate::{parse, type_check};
 
 /// Command-line interface for the RnR compiler.
 #[derive(Debug, Parser)]
 #[command(name = "rnr", about = "Run and configure the RnR compiler pipeline")]
 pub struct Cli {
-    /// Input program to compile; defaults to `./main.rs` when omitted.
+    /// Input program to compile.
     #[arg(
         short = 'i',
         long = "input",
         value_name = "PATH",
-        default_value = "main.rs"
+        default_value = "examples/ex1.rnr"
     )]
     pub input: PathBuf,
 
     /// Dump the parsed AST to a file.
     #[arg(short = 'a', long = "ast", value_name = "PATH")]
-    pub ast: Option<PathBuf>,
+    pub ast_path: Option<PathBuf>,
 
     /// Run the type checker.
     #[arg(short = 't', long = "type-check", alias = "type_check")]
@@ -47,47 +58,68 @@ impl Cli {
     }
 
     /// Execute compiler actions based on parsed options.
-    pub fn execute(&self) {
-        parse_input(&self.input);
+    pub fn execute(&self) -> anyhow::Result<()> {
+        let parsed_string = parse_input(&self.input)?;
+        let parsed_ast = parse::try_parse::<Prog>(&parsed_string)?;
 
-        if let Some(ast_path) = &self.ast {
-            emit_ast(ast_path);
+        if let Some(ast_path) = &self.ast_path {
+            emit_ast(ast_path, &parsed_ast)?;
         }
 
         if self.type_check {
-            run_type_check(&self.input);
+            run_type_check(&parsed_ast)?;
         }
 
         if self.code_gen {
-            generate_code(&self.input, self.asm.as_ref());
+            generate_code(&self.input, self.asm.as_ref())?;
         }
 
         if self.virtual_machine {
-            run_vm();
+            run_vm(&parsed_ast)?;
         }
 
-        if self.run {
-            run_generated();
-        }
+        if self.run || self.asm.is_some() || self.code_gen {
+            let instrs = codegen_instrs::<Prog>(&parsed_string)?;
+            if self.run {
+                run_generated(instrs.clone())?;
+            }
+
+            if let Some(asm_path) = &self.asm {
+                let mut asm_output = File::create(asm_path)?;
+                for instr in &instrs {
+                    asm_output.write_all(format!("{:#?}", instr).as_bytes())?;
+                }
+            }
+        };
+        Ok(())
     }
 }
 
-fn parse_input(path: &Path) {
-    todo!("Parse the input RnR program at {}", path.display());
+use std::fs::File;
+use std::io::{Write, read_to_string};
+fn parse_input(path: &Path) -> anyhow::Result<String> {
+    let file = File::open(path)?;
+    let result = read_to_string(file)?;
+    Ok(result)
 }
 
-fn emit_ast(path: &Path) {
-    unimplemented!("Higher grade: emit the AST to {}", path.display());
+fn emit_ast(path: &Path, ast: &Prog) -> anyhow::Result<()> {
+    let mut ast_output = File::create(path)?;
+    ast_output.write_all(format!("{:#?}", ast).as_bytes())?;
+    Ok(())
 }
 
-fn run_type_check(path: &Path) {
-    todo!(
-        "Run the type checker on the parsed program from {}",
-        path.display()
-    );
+fn run_type_check(ast: &Prog) -> anyhow::Result<()> {
+    let mut type_checker = TypeChecker::new();
+    let result = type_checker
+        .check_prog(ast)
+        .map_err(|op| println!("{}", op));
+    println!("Type success: {}", result.unwrap());
+
+    Ok(())
 }
 
-fn generate_code(path: &Path, asm_out: Option<&PathBuf>) {
+fn generate_code(path: &Path, asm_out: Option<&PathBuf>) -> anyhow::Result<()> {
     if let Some(path) = asm_out {
         unimplemented!(
             "Higher grade: write generated assembly to {}",
@@ -101,10 +133,19 @@ fn generate_code(path: &Path, asm_out: Option<&PathBuf>) {
     );
 }
 
-fn run_vm() {
-    unimplemented!("Higher grade: step the virtual machine over generated code");
+fn run_vm(ast: &Prog) -> anyhow::Result<()> {
+    let mut vm = VM::new();
+    let result = vm.eval_prog(ast).map_err(|op| println!("{}", op));
+    println!("VM success: {:?}", result.unwrap());
+
+    Ok(())
 }
 
-fn run_generated() {
-    todo!("Run generated code using the mips VM");
+fn run_generated(instrs: Vec<Instr>) -> anyhow::Result<()> {
+    let mut mips = Mips::new(mips::instrs::Instrs(instrs));
+
+    let _ = mips.run().map_err(|op| println!("{:?}", op));
+    let result = mips.rf.get(Reg::t0);
+    println!("Mips VM result: {}", result);
+    Ok(())
 }

@@ -216,7 +216,7 @@ impl TypeChecker {
         unify(r_type, body_retrun_type)
     }
 
-    fn check_prog(&mut self, prog: &Prog) -> Result<Type, Error> {
+    pub fn check_prog(&mut self, prog: &Prog) -> Result<Type, Error> {
         // Go through each fn and put in env check for duplicates
         for fn_decl in &prog.0 {
             let id = fn_decl.id.clone();
