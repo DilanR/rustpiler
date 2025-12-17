@@ -70,10 +70,6 @@ impl Cli {
             run_type_check(&parsed_ast)?;
         }
 
-        if self.code_gen {
-            generate_code(&self.input, self.asm.as_ref())?;
-        }
-
         if self.virtual_machine {
             run_vm(&parsed_ast)?;
         }
@@ -89,6 +85,10 @@ impl Cli {
                 for instr in &instrs {
                     asm_output.write_all(format!("{:#?}", instr).as_bytes())?;
                 }
+            }
+
+            if self.code_gen {
+                generate_code(instrs)?;
             }
         };
         Ok(())
@@ -119,18 +119,11 @@ fn run_type_check(ast: &Prog) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn generate_code(path: &Path, asm_out: Option<&PathBuf>) -> anyhow::Result<()> {
-    if let Some(path) = asm_out {
-        unimplemented!(
-            "Higher grade: write generated assembly to {}",
-            path.display()
-        );
-    }
-
-    todo!(
-        "Generate assembly or bytecode for the program at {}",
-        path.display()
-    );
+fn generate_code(instrs: Vec<Instr>) -> anyhow::Result<()> {
+    let vm = CodegenVm::new().run_instrs(instrs);
+    let result = vm.rf.get(mips::rf::Reg::t0) as i32;
+    println!("CodeGen result: {}", result);
+    Ok(())
 }
 
 fn run_vm(ast: &Prog) -> anyhow::Result<()> {
@@ -144,7 +137,7 @@ fn run_vm(ast: &Prog) -> anyhow::Result<()> {
 fn run_generated(instrs: Vec<Instr>) -> anyhow::Result<()> {
     let mut mips = Mips::new(mips::instrs::Instrs(instrs));
 
-    let _ = mips.run().map_err(|op| println!("{:?}", op));
+    let _ = mips.run();
     let result = mips.rf.get(Reg::t0);
     println!("Mips VM result: {}", result);
     Ok(())

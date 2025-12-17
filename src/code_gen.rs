@@ -146,7 +146,7 @@ impl CodegenVm {
             env: CodeGenEnv::new(),
         }
     }
-    pub fn run_instrs(instrs: Vec<Instr>) -> Mips {
+    pub fn run_instrs(&self, instrs: Vec<Instr>) -> Mips {
         let mut mips = Mips::new(Instrs::new_from_slice(&instrs));
         mips.run().ok();
         mips
