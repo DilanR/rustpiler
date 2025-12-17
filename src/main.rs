@@ -2,5 +2,8 @@ use rnr::cli::Cli;
 
 fn main() {
     let cli = Cli::parse();
-    let _ = cli.execute();
+    if let Err(err) = cli.execute() {
+        eprintln!("{err}");
+        std::process::exit(1);
+    }
 }
