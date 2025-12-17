@@ -1,0 +1,10 @@
+fn main() -> i32 {
+    let x = {
+        let a = 2;
+        let b = 4;
+        a + b
+    };
+    let y = -x;
+    if !(y < 0) { 1 } else { 0 }
+}
+// Should eval to 0

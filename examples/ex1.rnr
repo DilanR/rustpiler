@@ -1,4 +1,5 @@
+// test comment
 fn main() -> i32 {
     let x = 2 + 4;
-    x
+    x // comment
   }
