@@ -120,8 +120,7 @@ fn run_type_check(ast: &Prog) -> anyhow::Result<()> {
 }
 
 fn generate_code(instrs: Vec<Instr>) -> anyhow::Result<()> {
-    let vm = CodegenVm::new().run_instrs(instrs);
-    let result = vm.rf.get(mips::rf::Reg::t0) as i32;
+    let result = CodegenVm::new().run_instrs_get_t0_as_i32(instrs);
     println!("CodeGen result: {}", result);
     Ok(())
 }

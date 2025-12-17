@@ -146,10 +146,10 @@ impl CodegenVm {
             env: CodeGenEnv::new(),
         }
     }
-    pub fn run_instrs(&self, instrs: Vec<Instr>) -> Mips {
+    pub fn run_instrs_get_t0_as_i32(&self, instrs: Vec<Instr>) -> i32 {
         let mut mips = Mips::new(Instrs::new_from_slice(&instrs));
         mips.run().ok();
-        mips
+        mips.rf.get(t0) as i32
     }
 
     pub fn run(&self) -> Mips {
