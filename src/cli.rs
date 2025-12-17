@@ -186,7 +186,7 @@ fn run_generated(instrs: Vec<Instr>) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn parse_instrs(instrs: &Vec<Instr>) -> Vec<String> {
+fn parse_instrs(instrs: &[Instr]) -> Vec<String> {
     // Instr is in external crate, fmt::display cannot be implemented
     // Printing the debug of Instr gave a good understanding of the structure.
     // Note: Used llm to get help with this implementation
