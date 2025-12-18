@@ -316,3 +316,61 @@ mod type_prog {
         assert_type_fail(&prog);
     }
 }
+
+#[cfg(test)]
+mod peer_review_lab6 {
+    #![allow(clippy::all)]
+    use super::*;
+
+    #[test]
+    fn test_ex3_if() {
+        let prog: Prog = parse(
+            r#"
+        fn max(a: i32, b: i32) -> i32 {
+            if a > b { a } else { b }
+        }
+
+        fn main() -> i32 {
+            max(3, 7)
+            
+        }"#,
+        );
+        assert_type(&prog, Type::I32);
+    }
+
+    #[test]
+    fn test_ex4_while_sum() {
+        let prog: Prog = parse(
+            r#"
+        fn main() -> i32 {
+            let mut i: i32 = 0;
+            let mut sum: i32 = 0;
+            while i < 5 {
+                sum = sum + i;
+                i = i + 1;
+            }
+            sum
+        }
+        "#,
+        );
+        assert_type(&prog, Type::I32);
+    }
+
+    #[test]
+    fn test_ex4_block_expr() {
+        let prog: Prog = parse(
+            r#"
+        fn main() -> i32 {
+            let x = {
+                let a = 2;
+                let b = 4;
+                a + b
+            };
+            let y = -x;
+            if !(y < 0) { 1 } else { 0 }
+        }
+        "#,
+        );
+        assert_type(&prog, Type::I32);
+    }
+}

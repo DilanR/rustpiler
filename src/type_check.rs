@@ -27,11 +27,20 @@ impl TypeChecker {
             Expr::Ident(l) => Ok(self.env.lookup_binding(l)?.ty),
             Expr::Lit(literal) => Ok(literal.clone().into()),
             Expr::BinOp(bin_op, lhs, rhs) => {
-                let expected = bin_op.expected_type();
                 let lhs_type = self.check_expr(lhs)?;
                 let rhs_type = self.check_expr(rhs)?;
-                let got = unify(lhs_type, rhs_type)?;
-                unify(got, expected)
+                match bin_op {
+                    BinOp::Eq | BinOp::Lt | BinOp::Gt => {
+                        unify(lhs_type, Type::I32)?;
+                        unify(rhs_type, Type::I32)?;
+                        Ok(Type::Bool)
+                    }
+                    _ => {
+                        let expected = bin_op.expected_type();
+                        let got = unify(lhs_type, rhs_type)?;
+                        unify(got, expected)
+                    }
+                }
             }
             Expr::Par(inner) => self.check_expr(inner),
             Expr::Call(id, arguments) => self.check_call(id, arguments),
