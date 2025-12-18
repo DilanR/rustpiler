@@ -76,21 +76,30 @@ impl Cli {
             run_vm(&parsed_ast)?;
         }
 
-        if self.run || self.asm.is_some() || self.code_gen {
-            let instrs: Vec<Instr> = parsed_ast.eval().context("Code generation failed")?;
+        if self.run || self.asm.is_some() || self.code_gen || self.load_asm.is_some() {
+            let instrs: Vec<Instr> = self.generate_code(&parsed_ast)?;
+
             if self.run {
-                run_generated(instrs.clone())?;
+                run_generated(&instrs)?
             }
 
             if let Some(asm_path) = &self.asm {
                 let _ = generate_asm(asm_path, &instrs);
             }
-
-            if self.code_gen {
-                generate_code(instrs)?;
-            }
         }
         Ok(())
+    }
+
+    fn generate_code(&self, parsed_ast: &Prog) -> anyhow::Result<Vec<Instr>> {
+        match self.code_gen {
+            true => {
+                if !(self.run || self.asm.is_some()) {
+                    println!("Warning: Generated code is not used")
+                }
+                Ok(parsed_ast.eval().context("Code generation failed")?)
+            }
+            false => Err(anyhow::anyhow!("Error: Flag -c (--code-gen) is required")),
+        }
     }
 }
 
@@ -153,12 +162,6 @@ fn run_type_check(ast: &Prog) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn generate_code(instrs: Vec<Instr>) -> anyhow::Result<()> {
-    let result = CodegenVm::new().run_instrs_get_t0_as_i32(instrs);
-    println!("CodeGen result: {}", result);
-    Ok(())
-}
-
 fn run_vm(ast: &Prog) -> anyhow::Result<()> {
     let mut vm = VM::new();
     let result = vm.eval_prog(ast).context("VM execution failed")?;
@@ -166,8 +169,8 @@ fn run_vm(ast: &Prog) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_generated(instrs: Vec<Instr>) -> anyhow::Result<()> {
-    let mut mips = Mips::new(mips::instrs::Instrs(instrs));
+fn run_generated(instrs: &[Instr]) -> anyhow::Result<()> {
+    let mut mips = Mips::new(mips::instrs::Instrs(instrs.to_vec()));
 
     match mips.run() {
         Ok(()) => {}
@@ -185,7 +188,7 @@ fn run_generated(instrs: Vec<Instr>) -> anyhow::Result<()> {
 fn generate_asm(asm_path: &PathBuf, instrs: &[Instr]) -> anyhow::Result<()> {
     let mut asm_output = File::create(asm_path)
         .with_context(|| format!("Failed to create {}", asm_path.display()))?;
-    let parsed_instrs = parse_instrs(&instrs);
+    let parsed_instrs = parse_instrs(instrs);
     for instr in &parsed_instrs {
         asm_output
             .write_all(format!("{instr}\n").as_bytes())
