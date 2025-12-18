@@ -47,6 +47,10 @@ pub struct Cli {
     #[arg(long = "asm", value_name = "PATH")]
     pub asm: Option<PathBuf>,
 
+    /// Read .asm file [unimplemented].
+    #[arg(long = "load-asm", value_name = "PATH")]
+    pub load_asm: Option<PathBuf>,
+
     /// Execute generated code using the mips VM.
     #[arg(short = 'r', long = "run")]
     pub run: bool,
@@ -78,6 +82,10 @@ impl Cli {
 
         if self.run || self.asm.is_some() || self.code_gen || self.load_asm.is_some() {
             let instrs: Vec<Instr> = self.generate_code(&parsed_ast)?;
+
+            if self.load_asm.is_some() {
+                unimplemented!("Loading .asm")
+            }
 
             if self.run {
                 run_generated(&instrs)?
