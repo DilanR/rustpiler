@@ -81,32 +81,33 @@ impl Cli {
         }
 
         if self.run || self.asm.is_some() || self.code_gen || self.load_asm.is_some() {
-            let instrs: Vec<Instr> = self.generate_code(&parsed_ast)?;
-
-            if self.load_asm.is_some() {
-                unimplemented!("Loading .asm")
-            }
+            let instrs: Vec<Instr> = self.get_asm(&parsed_ast)?;
 
             if self.run {
                 run_generated(&instrs)?
             }
 
             if let Some(asm_path) = &self.asm {
-                let _ = generate_asm(asm_path, &instrs);
+                let _ = write_asm(asm_path, &instrs);
             }
         }
         Ok(())
     }
 
-    fn generate_code(&self, parsed_ast: &Prog) -> anyhow::Result<Vec<Instr>> {
-        match self.code_gen {
-            true => {
-                if !(self.run || self.asm.is_some()) {
-                    println!("Warning: Generated code is not used")
-                }
-                Ok(parsed_ast.eval().context("Code generation failed")?)
-            }
-            false => Err(anyhow::anyhow!("Error: Flag -c (--code-gen) is required")),
+    fn get_asm(&self, parsed_ast: &Prog) -> anyhow::Result<Vec<Instr>> {
+        if !(self.run || self.asm.is_some()) {
+            println!("Warning: Generated code is not used")
+        }
+        match (self.code_gen, self.load_asm.clone()) {
+            (true, None) => Ok(parsed_ast.eval().context("Code generation failed")?),
+
+            (false, None) => Err(anyhow::anyhow!("Error: Flag -c (--code-gen) is required")),
+
+            (false, Some(p)) => unimplemented!("load-asm"),
+
+            (true, Some(_)) => Err(anyhow::anyhow!(
+                "Error: Flag --code-gen and --load-asm are mutually exclusive"
+            )),
         }
     }
 }
@@ -193,7 +194,7 @@ fn run_generated(instrs: &[Instr]) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn generate_asm(asm_path: &PathBuf, instrs: &[Instr]) -> anyhow::Result<()> {
+fn write_asm(asm_path: &PathBuf, instrs: &[Instr]) -> anyhow::Result<()> {
     let mut asm_output = File::create(asm_path)
         .with_context(|| format!("Failed to create {}", asm_path.display()))?;
     let parsed_instrs = parse_instrs(instrs);
