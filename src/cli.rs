@@ -83,14 +83,7 @@ impl Cli {
             }
 
             if let Some(asm_path) = &self.asm {
-                let mut asm_output = File::create(asm_path)
-                    .with_context(|| format!("Failed to create {}", asm_path.display()))?;
-                let parsed_instrs = parse_instrs(&instrs);
-                for instr in &parsed_instrs {
-                    asm_output
-                        .write_all(format!("{instr}\n").as_bytes())
-                        .with_context(|| format!("Failed to write {}", asm_path.display()))?;
-                }
+                let _ = generate_asm(asm_path, &instrs);
             }
 
             if self.code_gen {
@@ -186,6 +179,18 @@ fn run_generated(instrs: Vec<Instr>) -> anyhow::Result<()> {
     }
     let result = mips.rf.get(Reg::t0);
     println!("Mips VM result: {}", result);
+    Ok(())
+}
+
+fn generate_asm(asm_path: &PathBuf, instrs: &[Instr]) -> anyhow::Result<()> {
+    let mut asm_output = File::create(asm_path)
+        .with_context(|| format!("Failed to create {}", asm_path.display()))?;
+    let parsed_instrs = parse_instrs(&instrs);
+    for instr in &parsed_instrs {
+        asm_output
+            .write_all(format!("{instr}\n").as_bytes())
+            .with_context(|| format!("Failed to write {}", asm_path.display()))?;
+    }
     Ok(())
 }
 
