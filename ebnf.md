@@ -31,15 +31,27 @@ While       = "while" , Expr , Block ;
 
 Expr        = IfThenElse
             | Block
-            | BinaryExpr ;
+            | OrExpr ;
 
 IfThenElse  = "if" , Expr , Block ,
               [ "else" , ( Block | IfThenElse ) ] ;
 
-BinaryExpr  = UnaryExpr ,
-              { BinOp , UnaryExpr } ;
+OrExpr      = AndExpr ,
+              { "||" , AndExpr } ;
 
-UnaryExpr   = [ UnOp ] , Primary ;
+AndExpr     = CmpExpr ,
+              { "&&" , CmpExpr } ;
+
+CmpExpr     = AddExpr ,
+              { ( "==" | "<" | ">" ) , AddExpr } ;
+
+AddExpr     = MulExpr ,
+              { ( "+" | "-" ) , MulExpr } ;
+
+MulExpr     = UnaryExpr ,
+              { ( "*" | "/" ) , UnaryExpr } ;
+
+UnaryExpr   = { UnOp } , Primary ;
 
 Primary     = Literal
             | Ident
