@@ -72,10 +72,10 @@ impl Env {
         Err(Error::Message(format!("Undefined variable {}", id)))
     }
 
-    pub fn lookup_fn(&self, name: &str) -> Option<FnDeclaration> {
-        for scope in self.functions.iter().rev() {
+    pub fn lookup_fn(&self, name: &str) -> Option<(usize, FnDeclaration)> {
+        for (i, scope) in self.functions.iter().enumerate().rev() {
             if let Some(f) = scope.get(name) {
-                return Some(f.clone());
+                return Some((i, f.clone()));
             }
         }
         None

@@ -173,42 +173,41 @@ impl VM {
             .collect::<Result<Vec<Val>, Error>>()?;
         if ident == "println!" {
             // TODO: proper eval of println!
-            Ok(Val::Lit(Literal::Unit))
-        } else {
-            let func = self
-                .env
-                .lookup_fn(ident)
-                .ok_or(VmError::NoFunctionFound(ident.to_owned()))?; // check arity of both matches in future match types aswell
-            // check arity
-            if func.parameters.0.len() != collected_args.len() {
-                return Err(Error::ParameterArityMismatch {
-                    id: ident.to_owned(),
-                    expected: func.parameters.0.len(),
-                    got: collected_args.len(),
-                });
-            }
-
-            let mut new_val_scope: HashMap<String, Val> = HashMap::new();
-            //match callers args to parameters
-            for (param, arg) in func.parameters.0.iter().zip(collected_args) {
-                let val = if param.mutable.0 {
-                    Val::Mut(Box::new(arg))
-                } else {
-                    arg
-                };
-
-                new_val_scope.insert(param.id.clone(), val);
-            }
-
-            // push a new scope for parameters
-            self.env.values.push(new_val_scope);
-
-            let fn_return = self.eval_block(&func.body)?;
-
-            // pop the parameter scope
-            self.env.values.pop();
-            Ok(fn_return)
+            return Ok(Val::Lit(Literal::Unit));
         }
+        let (def_depth, func) = self
+            .env
+            .lookup_fn(ident)
+            .ok_or(VmError::NoFunctionFound(ident.to_owned()))?; // check arity of both matches in future match types aswell
+        // check arity
+        if func.parameters.0.len() != collected_args.len() {
+            return Err(Error::ParameterArityMismatch {
+                id: ident.to_owned(),
+                expected: func.parameters.0.len(),
+                got: collected_args.len(),
+            });
+        }
+
+        let mut new_val_scope: HashMap<String, Val> = HashMap::new();
+        //match callers args to parameters
+        for (param, arg) in func.parameters.0.iter().zip(collected_args) {
+            let val = if param.mutable.0 {
+                Val::Mut(Box::new(arg))
+            } else {
+                arg
+            };
+
+            new_val_scope.insert(param.id.clone(), val);
+        }
+
+        // New vm for local scope
+        let mut fn_vm = VM::new();
+
+        fn_vm.env.functions = self.env.functions[..=def_depth].to_vec();
+
+        fn_vm.env.values.push(new_val_scope);
+
+        fn_vm.eval_block(&func.body)
     }
 
     pub fn eval_type(&mut self, expr: &Expr, ty: &Option<Type>) -> Result<Val, Error> {
@@ -331,7 +330,7 @@ impl VM {
         };
 
         //main should have no args and rtype, only parse body
-        self.eval_block(&main_fn.body)
+        self.eval_block(&main_fn.1.body)
     }
 
     fn eval_expr_if_then_else(
@@ -559,5 +558,48 @@ mod tests {
         );
 
         assert_eq!(v.unwrap().get_int().unwrap(), 4);
+    }
+
+    #[test]
+    fn test_global_fn_shadowing() {
+        // it should resolve to the global b(), not the locally defined one in main()
+        let v = parse_test::<Prog, Val>(
+            "
+        fn a() -> i32 {
+            b()
+        }
+
+        fn b() -> i32 {
+            42
+        }
+
+        fn main() {
+            fn b() -> i32 {
+                99
+            }
+            a()
+        }
+        ",
+        );
+
+        // a() should call the global b() which returns 42, not the local b() which returns 99
+        assert_eq!(v.unwrap().get_int().unwrap(), 42); // ERR left is 99
+    }
+    #[test]
+    fn test_nested_fn_shadowing() {
+        // this would error if one limited the search space for functions to FN_DEF_DEPTH since it won't find b()
+        let v = parse_test::<Prog, Val>(
+            "
+        fn a() -> i32 {
+            fn b() -> i32 {
+                100
+            }
+            b()
+        }
+        fn main() {
+            a()
+        }
+        ",
+        );
     }
 }
