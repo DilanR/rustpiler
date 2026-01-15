@@ -247,5 +247,6 @@ mod tests {
         }
         ",
         );
+        assert_eq!(v.unwrap().get_int().unwrap(), 100);
     }
 }
