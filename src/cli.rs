@@ -32,15 +32,15 @@ pub struct Cli {
     pub ast_path: Option<PathBuf>,
 
     /// Run the type checker.
-    #[arg(short = 't', long = "type-check", alias = "type_check")]
+    #[arg(short = 't', long = "type_check")]
     pub type_check: bool,
 
     /// Run the virtual machine on generated code.
-    #[arg(short = 'v', long = "virtual-machine", alias = "vm")]
+    #[arg(short = 'v', long = "virtual_machine", alias = "vm")]
     pub virtual_machine: bool,
 
     /// Perform code generation.
-    #[arg(short = 'c', long = "code-gen", alias = "code_gen")]
+    #[arg(short = 'c', long = "code_gen")]
     pub code_gen: bool,
 
     /// Write generated assembly to a file.
@@ -52,7 +52,7 @@ pub struct Cli {
     pub load_asm: Option<PathBuf>,
 
     /// Execute generated code using the mips VM.
-    #[arg(short = 'r', long = "run")]
+    #[arg(short = 'r')]
     pub run: bool,
 }
 

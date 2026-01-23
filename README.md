@@ -32,11 +32,11 @@ Common flags:
 
 - `-i, --input <PATH>`: input file (default: `examples/ex1.rnr`)
 - `-a, --ast <PATH>`: dump AST to file
-- `-t, --type-check`: run type checker
-- `-v, --virtual-machine`: run tree-walk VM
-- `-c, --code-gen`: run code generation
+- `-t, --type_check`: run type checker
+- `-v, --virtual_machine`: run tree-walk VM
+- `-c, --code_gen`: run code generation
 - `--asm <PATH>`: write formatted assembly to file
-- `-r, --run`: run generated code in the mips VM
+- `-r`: run generated code in the mips VM
 
 ## Run Examples
 
