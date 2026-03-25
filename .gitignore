@@ -1,3 +1,6 @@
 /target
 Cargo.lock
+*.asm
+*.ast
+cspell.json
 

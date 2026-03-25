@@ -26,7 +26,7 @@ I found this lab the most difficult particularly because of the theory regarding
 
 ## Lab 4
 
-I found this lab the easiest to complete, because I could following structure of the of lab 3. To be honest I almost attempted to implement parts of the type checker in lab 3 before remembering "Keep it simple, stupid". As with the lab 3 learning about type inference is something I found very useful.
+I found this lab the easiest to complete, because I could following structure of lab 3. To be honest I almost attempted to implement parts of the type checker in lab 3 before remembering "Keep it simple, stupid". As with the lab 3 learning about type inference is something I found very useful.
 
 ## Lab 5
 
