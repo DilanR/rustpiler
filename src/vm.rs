@@ -4,6 +4,7 @@ use crate::ast::{
 use crate::common::Eval;
 use crate::env;
 use crate::error::{Error, VmError};
+use crate::intrinsics::vm_println;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -172,8 +173,19 @@ impl VM {
             .map(|arg| self.eval_expr(arg))
             .collect::<Result<Vec<Val>, Error>>()?;
         if ident == "println!" {
+            let literals = collected_args
+                .into_iter()
+                .filter_map(|v| match v {
+                    Val::Lit(literal) => Some(literal),
+                    _ => None,
+                })
+                .collect();
+
+            let (_, intrinsic) = vm_println();
+            let res = intrinsic(literals);
+
             // TODO: proper eval of println!
-            return Ok(Val::Lit(Literal::Unit));
+            return Ok(Val::Lit(res));
         }
         let (def_depth, func) = self
             .env

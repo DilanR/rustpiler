@@ -5,6 +5,9 @@ use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
 pub enum Error {
+    #[error("Expected Literal")]
+    ExpectedLiteral(),
+
     #[error("undefined function `{0}`")]
     UndefinedFunction(String),
 
