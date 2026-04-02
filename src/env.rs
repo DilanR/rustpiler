@@ -59,7 +59,7 @@ impl Env {
             if let Some(existing) = scope.get_mut(id) {
                 match existing {
                     Val::Mut(inner) => {
-                        *inner = Box::new(new_val);
+                        **inner = new_val;
                     }
                     _ => {
                         *existing = new_val;
