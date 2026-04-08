@@ -1,6 +1,7 @@
 [package]
 edition = "2024"
 name = "rnr"
+description = "RnR compiler CLI"
 version = "0.1.0"
 
 [dependencies]
@@ -20,3 +21,7 @@ anyhow = "1.0.100"
 [dependencies.syn]
 features = ["full", "extra-traits"]
 version = "2.0.40"
+
+[[bin]]
+name = "rustpiler"
+path = "src/main.rs"
