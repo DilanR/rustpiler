@@ -21,3 +21,6 @@ pub mod code_gen;
 pub mod env;
 pub mod type_check;
 pub mod vm;
+
+// extras
+pub mod ast_visualizer;

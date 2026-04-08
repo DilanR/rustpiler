@@ -14,6 +14,7 @@ use crate::parse;
 use crate::type_check::TypeChecker;
 use crate::vm::VM;
 
+use crate::ast_visualizer::DotGenerator;
 /// Command-line interface for the RnR compiler.
 #[derive(Debug, Parser)]
 #[command(name = "rnr", about = "Run and configure the RnR compiler pipeline")]
@@ -158,6 +159,10 @@ fn emit_ast(path: &Path, ast: &Prog) -> anyhow::Result<()> {
     ast_output
         .write_all(format!("{:#?}", ast).as_bytes())
         .with_context(|| format!("Failed to write {}", path.display()))?;
+
+    let mut generator = DotGenerator::new();
+    let dot = generator.generate(ast);
+    println!("{}", dot);
     Ok(())
 }
 
