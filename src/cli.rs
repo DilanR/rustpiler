@@ -65,8 +65,18 @@ impl Cli {
     /// Execute compiler actions based on parsed options.
     pub fn execute(&self) -> anyhow::Result<()> {
         let parsed_string = parse_file(&self.input)?;
-        let parsed_ast = parse::try_parse::<Prog>(&parsed_string)
-            .with_context(|| format!("Failed to parse {}", self.input.display()))?;
+        let parsed_ast = match parse::try_parse::<Prog>(&parsed_string) {
+            Ok(prog) => prog,
+            Err(err) => {
+                let start = err.span().start();
+                return Err(anyhow::anyhow!(
+                    "Parsing failed at line {}, column {}: {}",
+                    start.line,
+                    start.column,
+                    err
+                ));
+            }
+        };
 
         if let Some(ast_path) = &self.ast_path {
             emit_ast(ast_path, &parsed_ast)?;
@@ -173,7 +183,10 @@ fn run_type_check(ast: &Prog) -> anyhow::Result<()> {
 
 fn run_vm(ast: &Prog) -> anyhow::Result<()> {
     let mut vm = VM::new();
-    let result = vm.eval_prog(ast).context("VM execution failed")?;
+    let result = match vm.eval_prog(ast) {
+        Ok(result) => result,
+        Err(err) => return Err(anyhow::anyhow!("VM execution failed: {err}")),
+    };
     println!("VM success: {:?}", result);
     Ok(())
 }

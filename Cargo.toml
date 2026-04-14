@@ -7,7 +7,7 @@ version = "0.1.0"
 [dependencies]
 thiserror = "2.0.17"
 indented = "0.1.0"
-proc-macro2 = "1.0.70"
+proc-macro2 = { version = "1.0.70", features = ["span-locations"] }
 quote = "1.0.33"
 regex = "1.10.2"
 structopt = "0.3.26"
