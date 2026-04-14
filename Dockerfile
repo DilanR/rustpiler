@@ -11,7 +11,7 @@ COPY --from=planner /app/recipe.json .
 RUN cargo chef cook --release
 COPY . .
 RUN cargo build --release
-RUN mv ./target/release/rnr ./app
+RUN mv ./target/release/rustpiler ./app
 
 FROM scratch AS runtime
 WORKDIR /app
