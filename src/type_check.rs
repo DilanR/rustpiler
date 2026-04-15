@@ -3,7 +3,7 @@ use std::{collections::HashMap, hash::Hash};
 use derive_more::Constructor;
 
 use crate::{
-    ast::{Arguments, BinOp, Block, Expr, FnDeclaration, Literal, Prog, Statement, Type},
+    ast::{Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Prog, Statement, Type},
     ast_traits,
     common::Eval,
     env::{AnnotatedType, TypeEnv},
@@ -23,10 +23,10 @@ impl TypeChecker {
     }
 
     pub fn check_expr(&mut self, expr: &Expr) -> Result<Type, Error> {
-        match expr {
-            Expr::Ident(l) => Ok(self.env.lookup_binding(l)?.ty),
-            Expr::Lit(literal) => Ok(literal.clone().into()),
-            Expr::BinOp(bin_op, lhs, rhs) => {
+        match &expr.node {
+            ExprKind::Ident(l) => Ok(self.env.lookup_binding(l)?.ty),
+            ExprKind::Lit(literal) => Ok(literal.clone().into()),
+            ExprKind::BinOp(bin_op, lhs, rhs) => {
                 let lhs_type = self.check_expr(lhs)?;
                 let rhs_type = self.check_expr(rhs)?;
                 match bin_op {
@@ -42,9 +42,9 @@ impl TypeChecker {
                     }
                 }
             }
-            Expr::Par(inner) => self.check_expr(inner),
-            Expr::Call(id, arguments) => self.check_call(id, arguments),
-            Expr::IfThenElse(cond, then, opt) => {
+            ExprKind::Par(inner) => self.check_expr(inner),
+            ExprKind::Call(id, arguments) => self.check_call(id, arguments),
+            ExprKind::IfThenElse(cond, then, opt) => {
                 unify(self.check_expr(cond)?, Type::Bool)?;
                 match opt {
                     Some(else_block) => {
@@ -53,8 +53,8 @@ impl TypeChecker {
                     None => self.check_block(then),
                 }
             }
-            Expr::Block(block) => self.check_block(block),
-            Expr::UnOp(un_op, expr) => {
+            ExprKind::Block(block) => self.check_block(block),
+            ExprKind::UnOp(un_op, expr) => {
                 let expected = un_op.expected_type();
                 unify(self.check_expr(expr)?, expected)
             }
@@ -87,8 +87,8 @@ impl TypeChecker {
             },
             Statement::Assign(lhs, rhs) => {
                 //check lhs is mutable or unInit and identifier
-                let (lhs_at, id) = match lhs {
-                    Expr::Ident(id) => match self.env.lookup_binding(id) {
+                let (lhs_at, id) = match &lhs.node {
+                    ExprKind::Ident(id) => match self.env.lookup_binding(id) {
                         Ok(t) => (t, id),
                         Err(e) => {
                             return Err(e);

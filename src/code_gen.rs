@@ -193,26 +193,26 @@ impl CodegenVm {
     }
 
     pub fn codegen_expr(&mut self, expr: &Expr) -> Result<(), Error> {
-        match expr {
-            Expr::Ident(id) => {
+        match &expr.node {
+            ExprKind::Ident(id) => {
                 let offset = self.env.lookup_value_offset(id)?;
                 self.env.add_instr(lw(t0, offset, fp));
                 self.env.push_to_stack(t0);
                 Ok(())
             }
-            Expr::Lit(lit) => self.env.push_lit_to_stack(lit),
-            Expr::BinOp(bin_op, lhs, rhs) => {
+            ExprKind::Lit(lit) => self.env.push_lit_to_stack(lit),
+            ExprKind::BinOp(bin_op, lhs, rhs) => {
                 self.codegen_expr(lhs)?;
                 self.codegen_expr(rhs)?;
                 self.codegen_expr_binop(*bin_op, lhs, rhs)
             }
-            Expr::Par(expr) => self.codegen_expr(expr),
-            Expr::Call(id, args) => self.codegen_call(id, args),
-            Expr::IfThenElse(cond, then, else_then) => {
+            ExprKind::Par(expr) => self.codegen_expr(expr),
+            ExprKind::Call(id, args) => self.codegen_call(id, args),
+            ExprKind::IfThenElse(cond, then, else_then) => {
                 self.codegen_expr_if_then_else(cond, then, else_then)
             }
-            Expr::Block(block) => self.codegen_block_expr(block),
-            Expr::UnOp(un_op, expr) => {
+            ExprKind::Block(block) => self.codegen_block_expr(block),
+            ExprKind::UnOp(un_op, expr) => {
                 self.codegen_expr(expr)?;
                 self.codegen_expr_unop(*un_op, expr)
             }
@@ -314,7 +314,7 @@ impl CodegenVm {
                 self.env.pop_from_stack(t0);
 
                 // check if ident is valid and assign
-                if let Expr::Ident(var) = ident {
+                if let ExprKind::Ident(var) = &ident.node {
                     let offset = self.env.lookup_value_offset(var)?;
                     self.env.add_instr(sw(t0, offset, fp));
                 } else {

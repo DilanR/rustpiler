@@ -15,7 +15,7 @@ mod type_expr {
         let a_ty = AnnotatedType::new(Type::I32, true, true);
         tc.env.define_binding("test", a_ty);
         assert_eq!(
-            tc.check_expr(&Expr::Ident("test".to_string()))
+            tc.check_expr(&ExprKind::Ident("test".to_string()))
                 .expect("ident_failed"),
             Type::I32,
         );
@@ -23,10 +23,10 @@ mod type_expr {
 
     #[test]
     fn simple_lit() {
-        let unit = Expr::Lit(Literal::Unit);
-        let int = Expr::Lit(Literal::Int(0));
-        let string = Expr::Lit(Literal::String("".to_string()));
-        let bool = Expr::Lit(Literal::Bool(false));
+        let unit = ExprKind::Lit(Literal::Unit);
+        let int = ExprKind::Lit(Literal::Int(0));
+        let string = ExprKind::Lit(Literal::String("".to_string()));
+        let bool = ExprKind::Lit(Literal::Bool(false));
 
         assert_type(&unit, Type::Unit);
         assert_type(&int, Type::I32);
@@ -36,8 +36,8 @@ mod type_expr {
 
     #[test]
     fn simple_par() {
-        let bool = Expr::Lit(Literal::Bool(false));
-        let par = Expr::Par(Box::new(bool));
+        let bool = ExprKind::Lit(Literal::Bool(false));
+        let par = ExprKind::Par(Box::new(bool));
 
         assert_type(&par, Type::Bool);
     }
@@ -150,14 +150,14 @@ mod type_expr {
     #[test]
     fn simple_bin() {
         let expected = Type::I32;
-        let e: Expr = parse("4+4");
+        let e: ExprKind = parse("4+4");
         assert_type(&e, expected);
     }
 
     #[test]
     fn type_expr_bin_op_fail() {
-        let p1: Expr = parse("5+true");
-        let p2: Expr = parse("true == false");
+        let p1: ExprKind = parse("5+true");
+        let p2: ExprKind = parse("true == false");
 
         assert_type_fail(&p1);
         assert_type_fail(&p2);
@@ -165,18 +165,18 @@ mod type_expr {
 
     #[test]
     fn type_expr_un_op_fail() {
-        let p1 = &Expr::UnOp(UnOp::Neg, Box::new(Expr::Lit(Literal::Bool(true))));
-        let p2 = &Expr::UnOp(UnOp::Bang, Box::new(Expr::Lit(Literal::Int(3))));
-        let e3 = &Expr::BinOp(
+        let p1 = &ExprKind::UnOp(UnOp::Neg, Box::new(ExprKind::Lit(Literal::Bool(true))));
+        let p2 = &ExprKind::UnOp(UnOp::Bang, Box::new(ExprKind::Lit(Literal::Int(3))));
+        let e3 = &ExprKind::BinOp(
             BinOp::Add,
-            Box::new(Expr::Lit(Literal::Int(0))),
-            Box::new(Expr::Lit(Literal::Bool(true))),
+            Box::new(ExprKind::Lit(Literal::Int(0))),
+            Box::new(ExprKind::Lit(Literal::Bool(true))),
         );
-        let p3 = &Expr::UnOp(UnOp::Bang, Box::new(e3.to_owned()));
-        let p4 = &Expr::BinOp(
+        let p3 = &ExprKind::UnOp(UnOp::Bang, Box::new(e3.to_owned()));
+        let p4 = &ExprKind::BinOp(
             BinOp::Eq,
-            Box::new(Expr::Lit(Literal::Bool(false))),
-            Box::new(Expr::Lit(Literal::Bool(true))),
+            Box::new(ExprKind::Lit(Literal::Bool(false))),
+            Box::new(ExprKind::Lit(Literal::Bool(true))),
         );
 
         assert_type_fail(p1);

@@ -3,21 +3,34 @@
 use crate::ast::*;
 use std::fmt::{self, write};
 
+pub fn expr(kind: ExprKind) -> Expr {
+    Spanned {
+        node: kind,
+        span: proc_macro2::Span::call_site(), // dummy span for tests
+    }
+}
+
 // Utility functions/traits for your AST here.
-impl Expr {
+impl ExprKind {
     pub fn bin_op(o: BinOp, left: Expr, right: Expr) -> Self {
-        Expr::BinOp(o, Box::new(left), Box::new(right))
+        ExprKind::BinOp(o, Box::new(left), Box::new(right))
     }
 
     pub fn un_op(o: UnOp, right: Expr) -> Self {
-        Expr::UnOp(o, Box::new(right))
+        ExprKind::UnOp(o, Box::new(right))
     }
 }
 
 /// Anything that can be converted into a Literal (like i32, bool, etc) can also be converted into an Expr.
+impl<T: Into<Literal>> From<T> for ExprKind {
+    fn from(x: T) -> Self {
+        ExprKind::Lit(x.into())
+    }
+}
+
 impl<T: Into<Literal>> From<T> for Expr {
     fn from(x: T) -> Self {
-        Expr::Lit(x.into())
+        expr(ExprKind::Lit(x.into()))
     }
 }
 
@@ -55,6 +68,12 @@ impl From<()> for Literal {
 impl From<String> for Literal {
     fn from(s: String) -> Self {
         Literal::String(s)
+    }
+}
+
+impl<T: fmt::Display> fmt::Display for Spanned<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.node.fmt(f)
     }
 }
 
@@ -126,20 +145,20 @@ impl fmt::Display for UnOp {
     }
 }
 
-impl fmt::Display for Expr {
+impl fmt::Display for ExprKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expr::Ident(i) => write!(f, "{}", i),
-            Expr::Lit(literal) => write!(f, "{}", literal),
-            Expr::BinOp(bin_op, expr, expr1) => write!(f, "{} {} {}", expr, bin_op, expr1),
-            Expr::Par(expr) => write!(f, "({})", expr),
-            Expr::Call(i, arguments) => write!(f, "{}{}", i, arguments),
-            Expr::IfThenElse(expr, block, block1) => match block1 {
+            ExprKind::Ident(i) => write!(f, "{}", i),
+            ExprKind::Lit(literal) => write!(f, "{}", literal),
+            ExprKind::BinOp(bin_op, expr, expr1) => write!(f, "{} {} {}", expr, bin_op, expr1),
+            ExprKind::Par(expr) => write!(f, "({})", expr),
+            ExprKind::Call(i, arguments) => write!(f, "{}{}", i, arguments),
+            ExprKind::IfThenElse(expr, block, block1) => match block1 {
                 Some(b1) => write!(f, "if {} {} else {}", expr, block, b1),
                 None => write!(f, "if {} {}", expr, block),
             },
-            Expr::Block(block) => write!(f, "{}", block),
-            Expr::UnOp(un_op, expr) => write!(f, "{}{}", un_op, expr),
+            ExprKind::Block(block) => write!(f, "{}", block),
+            ExprKind::UnOp(un_op, expr) => write!(f, "{}{}", un_op, expr),
         }
     }
 }
@@ -165,7 +184,7 @@ impl fmt::Display for Block {
 #[ignore = "ignoring self made test /dilred"]
 fn test_simple_block() {
     let block = Block {
-        statements: vec![Statement::Expr(Expr::Ident("test".to_string()))],
+        statements: vec![Statement::Expr(expr(ExprKind::Ident("test".to_string())))],
         semi: true,
     };
     let should_be = "{\n\ttest\n};";
@@ -264,7 +283,9 @@ fn fn_declaration_test() {
         parameters: params,
         ty: Some(Type::I32),
         body: Block {
-            statements: vec![Statement::Expr(Expr::Ident("testparam".to_string()))],
+            statements: vec![Statement::Expr(expr(ExprKind::Ident(
+                "testparam".to_string(),
+            )))],
             semi: false,
         },
     };
@@ -353,13 +374,13 @@ fn display_while() {
 
 #[test]
 fn display_expr() {
-    println!("{}", Expr::Ident("a".to_string()));
-    println!("{}", Expr::Lit(Literal::Int(7)));
-    println!("{}", Expr::Lit(Literal::Bool(false)));
-    let e = Expr::BinOp(
+    println!("{}", ExprKind::Ident("a".to_string()));
+    println!("{}", ExprKind::Lit(Literal::Int(7)));
+    println!("{}", ExprKind::Lit(Literal::Bool(false)));
+    let e = ExprKind::BinOp(
         BinOp::Add,
-        Box::new(Expr::Ident("a".to_string())),
-        Box::new(Expr::Lit(Literal::Int(7))),
+        Box::new(expr(ExprKind::Ident("a".to_string()))),
+        Box::new(expr(ExprKind::Lit(Literal::Int(7)))),
     );
     println!("{}", e);
     assert_eq!(format!("{}", e), "a + 7");
@@ -374,7 +395,7 @@ fn display_expr() {
 fn parse_display_expr() {
     let ts: proc_macro2::TokenStream = "a + 7".parse().unwrap();
     let e: Expr = syn::parse2(ts).unwrap();
-    println!("e {}", e);
+    println!("e {}", &e.node);
 }
 
 // This one will fail (Display for `if` is not yet implemented).

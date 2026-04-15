@@ -1,6 +1,6 @@
 use crate::ast::{
-    Arguments, BinOp, Block, Expr, FnDeclaration, Literal, Mutable, Parameter, Parameters, Prog,
-    Statement, Type, UnOp,
+    Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Mutable, Parameter,
+    Parameters, Prog, Spanned, Statement, Type, UnOp,
 };
 use proc_macro2::token_stream;
 use syn::{
@@ -119,18 +119,30 @@ impl Parse for UnOp {
     }
 }
 
+use proc_macro2::Span;
+
+fn expr(start: Span, end: Span, kind: ExprKind) -> Expr {
+    Spanned {
+        node: kind,
+        span: start.join(end).unwrap_or(start),
+    }
+}
 impl Parse for Expr {
     fn parse(input: ParseStream) -> Result<Self> {
         // Parse the first part of the expression.
-        let left = parse_operand(input)?;
-        // Now check if the rest is an Op Expr...
-        if peek_op(input) {
-            // In that case, we have to parse the rest of the expression.
-            parse_binary_op_expr(input, left, 0)
-        } else {
-            // Otherwise, the first part was the whole expression.
-            Ok(left)
-        }
+        let expr = {
+            let left = parse_operand(input)?;
+            // Now check if the rest is an Op Expr...
+            if peek_op(input) {
+                // In that case, we have to parse the rest of the expression.
+                parse_binary_op_expr(input, left, 0)?
+            } else {
+                // Otherwise, the first part was the whole expression.
+                left
+            }
+        };
+
+        Ok(expr)
     }
 }
 
@@ -177,47 +189,55 @@ fn end_of_expr(input: ParseStream) -> bool {
 /// Parse what could be an operand, i.e. the first part of a binary expression.
 /// This could be a literal, an identifier, a unary op, or an expression in parentheses.
 /// For example: `3 + ...`, `x + ...`, `!true && ...`, `(1+2) + ...`, or `[1,2,3][0] + ...`.
+/// No point in spanning operands for now
 fn parse_operand(input: ParseStream) -> Result<Expr> {
-    if input.peek(syn::token::Paren) {
+    let start = input.span();
+
+    let result = if input.peek(syn::token::Paren) {
         let content;
         let _ = syn::parenthesized!(content in input);
+
         if content.is_empty() {
-            Ok(Expr::Lit(Literal::Unit))
+            ExprKind::Lit(Literal::Unit)
         } else {
             let e: Expr = content.parse()?;
-            Ok(Expr::Par(Box::new(e)))
+            ExprKind::Par(Box::new(e))
         }
     } else if input.peek(Token![-]) || input.peek(Token![!]) {
         let op: UnOp = input.parse()?;
-        let e = parse_operand(input)?;
-        Ok(Expr::UnOp(op, Box::new(e)))
+        let e: Expr = input.parse()?; // this is correct now
+        ExprKind::UnOp(op, Box::new(e))
     } else if input.peek(Ident) {
-        parse_ident_or_call(input)
+        return parse_ident_or_call(input); // IMPORTANT: already must return Expr
     } else if input.peek(token::Brace) {
-        Ok(Expr::Block(input.parse::<Block>()?))
+        ExprKind::Block(input.parse::<Block>()?)
     } else if input.peek(Token![if]) {
         let _: Token![if] = input.parse()?;
         let condition: Expr = input.parse()?;
         let then_block: Block = input.parse()?;
+
         let opt_block = if input.peek(Token![else]) {
             let _: Token![else] = input.parse()?;
             if input.peek(Token![if]) {
                 let else_block: Expr = input.parse()?;
-                Some(else_block.into())
+                Some(else_block.into()) // this is OK if you implemented From<Expr> for Block
             } else {
-                let opt_block: Block = input.parse()?;
-                Some(opt_block)
+                Some(input.parse::<Block>()?)
             }
         } else {
             None
         };
-        Ok(Expr::IfThenElse(Box::new(condition), then_block, opt_block))
+
+        ExprKind::IfThenElse(Box::new(condition), then_block, opt_block)
     } else if input.peek(syn::Lit) {
-        let left: Literal = input.parse()?;
-        Ok(left.into())
+        let lit: Literal = input.parse()?;
+        ExprKind::Lit(lit)
     } else {
-        Err(Error::new(input.span(), "Invalid operand!"))
-    }
+        return Err(Error::new(input.span(), "Invalid operand!"));
+    };
+
+    let end = input.span();
+    Ok(expr(start, end, result))
 }
 
 /// Parse an expression consisting of binary operators, such as `1 + 2`, `1 + 2 + 3`,
@@ -251,29 +271,39 @@ fn parse_binary_op_expr(input: ParseStream, left: Expr, min_prio: u8) -> Result<
     let right = parse_binary_op_expr(input, right, next_min)?;
 
     // combine and continue parsing more operators at or above min_prio
-    let new_left = Expr::bin_op(op, left, right);
+    let new_left = expr(
+        input.span(),
+        input.span(),
+        ExprKind::bin_op(op, left, right),
+    );
     parse_binary_op_expr(input, new_left, min_prio)
 }
 
 fn parse_ident_or_call(input: ParseStream) -> Result<Expr> {
-    match input.parse::<Ident>() {
+    let start = input.span();
+
+    let kind = match input.parse::<Ident>() {
         Ok(identifier) => {
             // macro call
             if input.peek(Token![!]) {
                 let _: Token![!] = input.parse()?;
                 let args: Arguments = input.parse()?;
-                Ok(Expr::Call(format!("{}!", identifier), args))
+                ExprKind::Call(format!("{}!", identifier), args)
             }
             // function call
             else if input.peek(syn::token::Paren) {
                 let args: Arguments = input.parse()?;
-                Ok(Expr::Call(identifier.to_string(), args))
+                ExprKind::Call(identifier.to_string(), args)
             } else {
-                Ok(Expr::Ident(identifier.to_string()))
+                ExprKind::Ident(identifier.to_string())
             }
         }
-        Err(e) => Err(e),
-    }
+        Err(e) => return Err(e),
+    };
+
+    let end = input.span();
+
+    Ok(expr(start, end, kind))
 }
 
 //
@@ -522,8 +552,8 @@ impl Parse for Block {
             let requires_semi = match &stmt {
                 Statement::Let(..) => true,
                 Statement::Assign(..) => !is_last,
-                Statement::Expr(e) => match e {
-                    Expr::Block(e) => false,
+                Statement::Expr(e) => match &e.node {
+                    ExprKind::Block(e) => false,
                     _ => !is_last,
                 },
                 Statement::While(..) | Statement::Fn(..) => false,

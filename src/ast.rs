@@ -1,3 +1,17 @@
+use proc_macro2::Span;
+
+#[derive(Debug, Clone)]
+pub struct Spanned<T> {
+    pub node: T,
+    pub span: Span,
+}
+
+impl<T: PartialEq> PartialEq for Spanned<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.node == other.node
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     I32,
@@ -48,8 +62,10 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Arguments(pub Vec<Expr>);
 
+pub type Expr = Spanned<ExprKind>;
+
 #[derive(Debug, Clone, PartialEq)]
-pub enum Expr {
+pub enum ExprKind {
     Ident(String),
     Lit(Literal),
     BinOp(BinOp, Box<Expr>, Box<Expr>),

@@ -1,5 +1,6 @@
 use crate::ast::{
-    Arguments, BinOp, Block, Expr, FnDeclaration, Literal, Mutable, Prog, Statement, Type, UnOp,
+    Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Mutable, Prog, Statement,
+    Type, UnOp,
 };
 use crate::common::Eval;
 use crate::env;
@@ -136,25 +137,25 @@ impl VM {
     }
 
     pub fn eval_expr(&mut self, expr: &Expr) -> Result<Val, Error> {
-        match expr {
-            Expr::Lit(lit) => Ok(Val::from(lit.clone())),
-            Expr::Par(expr) => self.eval_expr(expr),
-            Expr::Ident(id) => self
+        match &expr.node {
+            ExprKind::Lit(lit) => Ok(Val::from(lit.clone())),
+            ExprKind::Par(expr) => self.eval_expr(expr),
+            ExprKind::Ident(id) => self
                 .env
                 .lookup_value(id)
                 .ok_or(VmError::NoValFound(id.to_owned()).into()),
-            Expr::BinOp(op, left, right) => {
+            ExprKind::BinOp(op, left, right) => {
                 let left: Val = self.eval_expr(left)?;
                 let right: Val = self.eval_expr(right)?;
                 let result = BinOp::eval(op, left, right)?;
                 Ok(result)
             }
-            Expr::Call(fn_name, arguments) => self.eval_expr_call(fn_name, arguments),
-            Expr::IfThenElse(expr, block, block1) => {
+            ExprKind::Call(fn_name, arguments) => self.eval_expr_call(fn_name, arguments),
+            ExprKind::IfThenElse(expr, block, block1) => {
                 self.eval_expr_if_then_else(expr, block, block1)
             }
-            Expr::Block(block) => self.eval_block(block),
-            Expr::UnOp(un_op, expr) => {
+            ExprKind::Block(block) => self.eval_block(block),
+            ExprKind::UnOp(un_op, expr) => {
                 let right = self.eval_expr(expr)?;
                 let result = match un_op {
                     UnOp::Neg => Literal::Int(-i32::from(right)),
@@ -267,7 +268,7 @@ impl VM {
 
     pub fn eval_stmt_assign(&mut self, lhs: &Expr, rhs: &Expr) -> Result<Val, Error> {
         let rhs_val = self.eval_expr(rhs)?;
-        if let Expr::Ident(id) = lhs {
+        if let ExprKind::Ident(id) = &lhs.node {
             self.env.assign_value(id, rhs_val)?;
             Ok(Val::from(()))
         } else {

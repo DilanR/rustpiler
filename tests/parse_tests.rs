@@ -142,6 +142,13 @@ mod parse_unop {
     }
 }
 
+fn expr(kind: ExprKind) -> Expr {
+    Spanned {
+        node: kind,
+        span: proc_macro2::Span::call_site(),
+    }
+}
+
 #[cfg(test)]
 mod parse_expr {
     #![allow(clippy::all)]
@@ -239,27 +246,27 @@ mod parse_expr {
     // Some helpers for building Expr ASTs.
 
     fn add<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        Expr::bin_op(BinOp::Add, left.into(), right.into())
+        expr(ExprKind::bin_op(BinOp::Add, left.into(), right.into()))
     }
 
     fn mul<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        Expr::bin_op(BinOp::Mul, left.into(), right.into())
+        expr(ExprKind::bin_op(BinOp::Mul, left.into(), right.into()))
     }
 
     fn or<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        Expr::bin_op(BinOp::Or, left.into(), right.into())
+        expr(ExprKind::bin_op(BinOp::Or, left.into(), right.into()))
     }
 
     fn and<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        Expr::bin_op(BinOp::And, left.into(), right.into())
+        expr(ExprKind::bin_op(BinOp::And, left.into(), right.into()))
     }
 
     fn eq<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        Expr::bin_op(BinOp::Eq, left.into(), right.into())
+        expr(ExprKind::bin_op(BinOp::Eq, left.into(), right.into()))
     }
 
-    pub fn paren(expr: Expr) -> Expr {
-        Expr::Par(Box::new(expr))
+    pub fn paren(_expr: Expr) -> Expr {
+        expr(ExprKind::Par(Box::new(_expr)))
     }
 
     // Here are some test cases that directly examine the AST that is built from the expressions to
@@ -745,7 +752,7 @@ mod parse_statement {
             Mutable(false),
             "a".to_string(),
             Some(Type::I32),
-            Some(Expr::Lit(Literal::Int(2))),
+            Some(expr(ExprKind::Lit(Literal::Int(2)))),
         );
         assert_eq!(stmt, expected);
     }
@@ -757,7 +764,7 @@ mod parse_statement {
             Mutable(true),
             "a".to_string(),
             Some(Type::I32),
-            Some(Expr::Lit(Literal::Int(2))),
+            Some(expr(ExprKind::Lit(Literal::Int(2)))),
         );
         assert_eq!(stmt, expected);
     }
@@ -773,8 +780,8 @@ mod parse_statement {
     fn test_statement_assign() {
         let stmt: Statement = parse("a = false");
         let expected = Statement::Assign(
-            Expr::Ident("a".to_string()),
-            Expr::Lit(Literal::Bool(false)),
+            expr(ExprKind::Ident("a".to_string())),
+            expr(ExprKind::Lit(Literal::Bool(false))),
         );
         assert_eq!(stmt, expected);
     }
@@ -783,7 +790,7 @@ mod parse_statement {
     fn test_statement_while() {
         let stmt: Statement = parse("while a {}");
         let expected = Statement::While(
-            Expr::Ident("a".to_string()),
+            expr(ExprKind::Ident("a".to_string())),
             Block {
                 statements: vec![],
                 semi: false,
@@ -796,7 +803,10 @@ mod parse_statement {
     fn test_statement_expr() {
         let stmt: Statement = parse("a");
         println!("stmt {:?}", stmt);
-        assert_eq!(stmt, Statement::Expr(Expr::Ident("a".to_string())));
+        assert_eq!(
+            stmt,
+            Statement::Expr(expr(ExprKind::Ident("a".to_string())))
+        );
     }
 
     // Trying to parse these statements should fail.
@@ -815,5 +825,141 @@ mod parse_statement {
         // left-hand side to be an expression (such as `xs[0] = 3`). So checking what kinds of
         // expressions are allowed on the left of an assignment would require a bit more work and
         // is probably best done by the type checker or VM.
+    }
+}
+
+#[cfg(test)]
+#[cfg(test)]
+mod span_tests {
+    use super::*;
+
+    #[test]
+    fn span_exists_on_expr() {
+        let expr: Expr = parse("1 + 2");
+
+        let _ = expr.span;
+
+        if let ExprKind::BinOp(_, left, right) = &expr.node {
+            let _ = left.span;
+            let _ = right.span;
+        } else {
+            panic!("expected binop");
+        }
+    }
+
+    #[test]
+    fn span_binop_joinable() {
+        let expr: Expr = parse("1 + 2");
+
+        if let ExprKind::BinOp(_, left, right) = &expr.node {
+            let joined = left.span.join(right.span);
+            assert!(joined.is_some());
+        } else {
+            panic!("expected binop");
+        }
+    }
+
+    #[test]
+    fn span_paren_differs_from_inner() {
+        let expr: Expr = parse("(1)");
+
+        if let ExprKind::Par(inner) = &expr.node {
+            assert_ne!(format!("{:?}", expr.span), format!("{:?}", inner.span));
+        } else {
+            panic!("expected paren");
+        }
+    }
+
+    #[test]
+    fn span_nested_binop_joinable() {
+        let expr: Expr = parse("1 + 2 * 3");
+
+        if let ExprKind::BinOp(_, _, right) = &expr.node {
+            if let ExprKind::BinOp(_, r_left, r_right) = &right.node {
+                assert!(r_left.span.join(r_right.span).is_some());
+            } else {
+                panic!("expected nested binop");
+            }
+        } else {
+            panic!("expected binop");
+        }
+    }
+
+    #[test]
+    fn span_literal_exists() {
+        let expr: Expr = parse("42");
+
+        match &expr.node {
+            ExprKind::Lit(_) => {
+                let _ = expr.span;
+            }
+            _ => panic!("expected literal"),
+        }
+    }
+
+    #[test]
+    fn span_unop_exists() {
+        let expr: Expr = parse("!true");
+
+        if let ExprKind::UnOp(_, inner) = &expr.node {
+            let _ = expr.span;
+            let _ = inner.span;
+        } else {
+            panic!("expected unary op");
+        }
+    }
+
+    #[test]
+    fn span_if_expr_exists() {
+        let expr: Expr = parse("if true {1} else {2}");
+
+        if let ExprKind::IfThenElse(cond, _then_block, else_block) = &expr.node {
+            let _ = expr.span;
+            let _ = cond.span;
+
+            if let Some(block) = else_block {
+                let _ = block;
+            }
+        } else {
+            panic!("expected if expression");
+        }
+    }
+
+    #[test]
+    fn span_block_expr_exists() {
+        let expr: Expr = parse("{ 1 }");
+
+        if let ExprKind::Block(block) = &expr.node {
+            let _ = expr.span;
+            assert!(block.statements.len() >= 0);
+        } else {
+            panic!("expected block");
+        }
+    }
+
+    #[test]
+    fn span_ident_exists() {
+        let expr: Expr = parse("abc");
+
+        if let ExprKind::Ident(_) = &expr.node {
+            let _ = expr.span;
+        } else {
+            panic!("expected ident");
+        }
+    }
+
+    #[test]
+    fn span_call_exists() {
+        let expr: Expr = parse("foo(1, 2)");
+
+        if let ExprKind::Call(_, args) = &expr.node {
+            let _ = expr.span;
+
+            for arg in &args.0 {
+                let _ = arg.span;
+            }
+        } else {
+            panic!("expected call");
+        }
     }
 }
