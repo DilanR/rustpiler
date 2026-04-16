@@ -1,6 +1,5 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
-#![allow(unused_imports)]
 
 // Strive to keep your code free of warnings
 // Eventually you should be able to deny unused_variables, dead_code etc.
