@@ -370,7 +370,7 @@ mod parse_block {
     #[test]
     fn test_block_expr_fail() {
         let ts: proc_macro2::TokenStream = "{ let a = }".parse().unwrap();
-        let stmt: Result<StatementKind> = syn::parse2(ts);
+        let stmt: Result<Statement> = syn::parse2(ts);
         println!("stmt {:?}", stmt);
         assert!(stmt.is_err());
     }
@@ -740,65 +740,72 @@ mod parse_statement {
 
     #[test]
     fn test_statement_let_ty_expr() {
-        let stmt: StatementKind = parse("let a: i32 = 2");
-        let expected = StatementKind::Let(
+        let stmt: Statement = parse("let a: i32 = 2");
+        let expected = Spanned::dummy(StatementKind::Let(
             Mutable(false),
             "a".to_string(),
             Some(Type::I32),
             Some(Spanned::dummy(ExprKind::Lit(Literal::Int(2)))),
-        );
+        ));
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_let_mut_ty_expr() {
-        let stmt: StatementKind = parse("let mut a: i32 = 2");
-        let expected = StatementKind::Let(
+        let stmt: Statement = parse("let mut a: i32 = 2");
+        let expected = Spanned::dummy(StatementKind::Let(
             Mutable(true),
             "a".to_string(),
             Some(Type::I32),
             Some(Spanned::dummy(ExprKind::Lit(Literal::Int(2)))),
-        );
+        ));
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_let() {
-        let stmt: StatementKind = parse("let a");
-        let expected = StatementKind::Let(Mutable(false), "a".to_string(), None, None);
+        let stmt: Statement = parse("let a");
+        let expected = Spanned::dummy(StatementKind::Let(
+            Mutable(false),
+            "a".to_string(),
+            None,
+            None,
+        ));
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_assign() {
-        let stmt: StatementKind = parse("a = false");
-        let expected = StatementKind::Assign(
+        let stmt: Statement = parse("a = false");
+        let expected = Spanned::dummy(StatementKind::Assign(
             Spanned::dummy(ExprKind::Ident("a".to_string())),
             Spanned::dummy(ExprKind::Lit(Literal::Bool(false))),
-        );
+        ));
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_while() {
-        let stmt: StatementKind = parse("while a {}");
-        let expected = StatementKind::While(
+        let stmt: Statement = parse("while a {}");
+        let expected = Spanned::dummy(StatementKind::While(
             Spanned::dummy(ExprKind::Ident("a".to_string())),
             Block {
                 statements: vec![],
                 semi: false,
             },
-        );
+        ));
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_expr() {
-        let stmt: StatementKind = parse("a");
+        let stmt: Statement = parse("a");
         println!("stmt {:?}", stmt);
         assert_eq!(
             stmt,
-            StatementKind::Expr(Spanned::dummy(ExprKind::Ident("a".to_string())))
+            Spanned::dummy(StatementKind::Expr(Spanned::dummy(ExprKind::Ident(
+                "a".to_string()
+            ))))
         );
     }
 
@@ -806,14 +813,14 @@ mod parse_statement {
 
     #[test]
     fn fail_tests() {
-        assert_parse_fail::<StatementKind>("let a i32;");
-        assert_parse_fail::<StatementKind>("let a: I32;");
-        assert_parse_fail::<StatementKind>("let a: i32 == 3;");
-        assert_parse_fail::<StatementKind>("let 123;");
-        assert_parse_fail::<StatementKind>("let 123: i32;");
-        assert_parse_fail::<StatementKind>("123_var = 3;");
-        assert_parse_fail::<StatementKind>("while true { let x }");
-        assert_parse_fail::<StatementKind>("while {}");
+        assert_parse_fail::<Statement>("let a i32;");
+        assert_parse_fail::<Statement>("let a: I32;");
+        assert_parse_fail::<Statement>("let a: i32 == 3;");
+        assert_parse_fail::<Statement>("let 123;");
+        assert_parse_fail::<Statement>("let 123: i32;");
+        assert_parse_fail::<Statement>("123_var = 3;");
+        assert_parse_fail::<Statement>("while true { let x }");
+        assert_parse_fail::<Statement>("while {}");
         // NOTE: we could also test something like "123 = 3", but we will want to allow the
         // left-hand side to be an expression (such as `xs[0] = 3`). So checking what kinds of
         // expressions are allowed on the left of an assignment would require a bit more work and
@@ -924,7 +931,7 @@ mod span_tests {
 
         if let ExprKind::Block(block) = &expr.node {
             let _ = expr.span;
-            assert!(block.statements.len() >= 0);
+            assert!(block.statements.len() > 0);
         } else {
             panic!("expected block");
         }

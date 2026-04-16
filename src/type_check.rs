@@ -1,5 +1,8 @@
 use crate::{
-    ast::{Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Prog, Statement, Type},
+    ast::{
+        Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Prog, Statement,
+        StatementKind, Type,
+    },
     common::Eval,
     env::{AnnotatedType, TypeEnv},
     error::{Error, TypeError},
@@ -63,8 +66,8 @@ impl TypeChecker {
     }
 
     pub fn check_stmt(&mut self, stmt: &Statement) -> Result<Type, Error> {
-        match stmt {
-            Statement::Let(mutable, id, ty, expr) => match (ty, expr) {
+        match &stmt.node {
+            StatementKind::Let(mutable, id, ty, expr) => match (ty, expr) {
                 (None, None) => Err(TypeError::UnInitType(id.to_owned()).into()),
                 (None, Some(e)) => {
                     let infered_type = self.check_expr(e)?;
@@ -86,7 +89,7 @@ impl TypeChecker {
                     Ok(t.clone())
                 }
             },
-            Statement::Assign(lhs, rhs) => {
+            StatementKind::Assign(lhs, rhs) => {
                 //check lhs is mutable or unInit and identifier
                 let (lhs_at, id) = match &lhs.node {
                     ExprKind::Ident(id) => match self.env.lookup_binding(id) {
@@ -110,12 +113,12 @@ impl TypeChecker {
 
                 Ok(Type::Unit)
             }
-            Statement::While(cond, block) => {
+            StatementKind::While(cond, block) => {
                 unify(cond, self.check_expr(cond)?, Type::Bool)?;
                 Ok(self.check_block(block)?)
             }
-            Statement::Expr(expr) => Ok(self.check_expr(expr)?),
-            Statement::Fn(fn_decl) => {
+            StatementKind::Expr(expr) => Ok(self.check_expr(expr)?),
+            StatementKind::Fn(fn_decl) => {
                 let _params_type: Vec<AnnotatedType> = fn_decl
                     .parameters
                     .0
@@ -138,8 +141,8 @@ impl TypeChecker {
         self.env.push_scope();
 
         for stmt in &block.statements {
-            match stmt {
-                Statement::Fn(f) => {
+            match &stmt.node {
+                StatementKind::Fn(f) => {
                     let f = f.to_owned();
                     self.env.define_function(f);
                 }

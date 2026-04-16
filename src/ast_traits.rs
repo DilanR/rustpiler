@@ -193,7 +193,9 @@ impl fmt::Display for Block {
 #[ignore = "ignoring self made test /dilred"]
 fn test_simple_block() {
     let block = Block {
-        statements: vec![Statement::Expr(expr(ExprKind::Ident("test".to_string())))],
+        statements: vec![Spanned::dummy(StatementKind::Expr(expr(ExprKind::Ident(
+            "test".to_string(),
+        ))))],
         semi: true,
     };
     let should_be = "{\n\ttest\n};";
@@ -292,9 +294,9 @@ fn fn_declaration_test() {
         parameters: params,
         ty: Some(Type::I32),
         body: Block {
-            statements: vec![Statement::Expr(expr(ExprKind::Ident(
+            statements: vec![Spanned::dummy(StatementKind::Expr(expr(ExprKind::Ident(
                 "testparam".to_string(),
-            )))],
+            ))))],
             semi: false,
         },
     };
@@ -315,10 +317,10 @@ impl fmt::Display for Prog {
     }
 }
 
-impl fmt::Display for Statement {
+impl fmt::Display for StatementKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
-            Statement::Let(mutable, string, _type, expr) => {
+            StatementKind::Let(mutable, string, _type, expr) => {
                 write!(
                     f,
                     "let {}{}{}{}",
@@ -334,12 +336,12 @@ impl fmt::Display for Statement {
                     }
                 )
             }
-            Statement::Assign(expr, expr1) => write!(f, "{} = {}", expr, expr1),
-            Statement::While(expr, block) => {
+            StatementKind::Assign(expr, expr1) => write!(f, "{} = {}", expr, expr1),
+            StatementKind::While(expr, block) => {
                 write!(f, "while {} {}", expr, block)
             }
-            Statement::Expr(expr) => write!(f, "{}", expr),
-            Statement::Fn(fn_declaration) => write! {f, "{}", fn_declaration},
+            StatementKind::Expr(expr) => write!(f, "{}", expr),
+            StatementKind::Fn(fn_declaration) => write! {f, "{}", fn_declaration},
         }
     }
 }

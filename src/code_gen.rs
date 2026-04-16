@@ -263,13 +263,13 @@ impl CodegenVm {
         let n = block.statements.len();
         for (i, stmt) in block.statements.iter().enumerate() {
             let is_last = i + 1 == n;
-            match stmt {
+            match &stmt.node {
                 // Last expression and no trailing semicolon => expression block
-                Statement::Expr(expr) if is_last && !block.semi => {
+                StatementKind::Expr(expr) if is_last && !block.semi => {
                     self.codegen_expr(expr)?;
                 }
                 // Expression used as statement => discard result
-                Statement::Expr(expr) => {
+                StatementKind::Expr(expr) => {
                     self.codegen_expr(expr)?;
                     self.env.pop_from_stack(t0);
                 }
@@ -290,8 +290,8 @@ impl CodegenVm {
     }
 
     fn codegen_stmt(&mut self, stmt: &Statement) -> Result<(), Error> {
-        match stmt {
-            Statement::Let(_, ident, _, expr) => {
+        match &stmt.node {
+            StatementKind::Let(_, ident, _, expr) => {
                 // if None = Unit ie 0
                 match expr {
                     Some(e) => {
@@ -308,7 +308,7 @@ impl CodegenVm {
                 let offset = self.env.lookup_value_offset(ident)?;
                 self.env.add_instr(sw(t0, offset, fp));
             }
-            Statement::Assign(ident, rhs) => {
+            StatementKind::Assign(ident, rhs) => {
                 // eval rhs and put in reg t0
                 self.codegen_expr(rhs)?;
                 self.env.pop_from_stack(t0);
@@ -321,7 +321,7 @@ impl CodegenVm {
                     return Err(TypeError::AssignmentToNonIdent(ident.to_string()).into());
                 };
             }
-            Statement::While(cond, block) => {
+            StatementKind::While(cond, block) => {
                 let while_start_label = self.env.emit_label("while_start");
                 let while_end_label = self.env.define_label("while_end");
                 // codegen condition
@@ -333,8 +333,8 @@ impl CodegenVm {
                 self.env.add_instr(b_label(&while_start_label));
                 self.env.add_nop_with_label(&while_end_label);
             }
-            Statement::Expr(expr) => self.codegen_expr(expr)?,
-            Statement::Fn(fn_declaration) => {
+            StatementKind::Expr(expr) => self.codegen_expr(expr)?,
+            StatementKind::Fn(fn_declaration) => {
                 // make fn visible in current scope and skip over body at runtime
                 self.env.define_function_label(&fn_declaration.id);
                 let after_fn_label = self.env.define_label("after_local_fn");

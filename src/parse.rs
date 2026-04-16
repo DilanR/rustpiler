@@ -1,6 +1,6 @@
 use crate::ast::{
     Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Mutable, Parameter,
-    Parameters, Prog, Spanned, Statement, Type, UnOp,
+    Parameters, Prog, Spanned, Statement, StatementKind, Type, UnOp,
 };
 use syn::{
     Error, Ident, Result, Token,
@@ -403,49 +403,63 @@ impl Parse for FnDeclaration {
 
 impl Parse for Statement {
     fn parse(input: ParseStream) -> Result<Statement> {
-        if input.peek(syn::token::Let) {
-            let _: syn::token::Let = input.parse()?;
-            let mutable = if input.peek(syn::token::Mut) {
-                let _: syn::token::Mut = input.parse()?;
-                Mutable(true)
-            } else {
-                Mutable(false)
-            };
+        let start = input.span();
 
-            let identifier: Ident = input.parse()?;
+        let kind = {
+            if input.peek(syn::token::Let) {
+                let _: syn::token::Let = input.parse()?;
+                let mutable = if input.peek(syn::token::Mut) {
+                    let _: syn::token::Mut = input.parse()?;
+                    Mutable(true)
+                } else {
+                    Mutable(false)
+                };
 
-            let ty: Option<Type> = if input.peek(syn::token::Colon) {
-                let _: syn::token::Colon = input.parse()?;
-                Some(input.parse::<Type>()?)
-            } else {
-                None
-            };
+                let identifier: Ident = input.parse()?;
 
-            let expr: Option<Expr> = if input.peek(syn::token::Eq) {
-                let _: syn::token::Eq = input.parse()?;
-                Some(input.parse::<Expr>()?)
-            } else {
-                None
-            };
+                let ty: Option<Type> = if input.peek(syn::token::Colon) {
+                    let _: syn::token::Colon = input.parse()?;
+                    Some(input.parse::<Type>()?)
+                } else {
+                    None
+                };
 
-            //Accord to rust spec let should end with ';' however not according to tests
-            Ok(Statement::Let(mutable, identifier.to_string(), ty, expr))
-        } else if input.peek(syn::token::While) {
-            let _: syn::token::While = input.parse()?;
-            let condition: Expr = input.parse()?;
-            let block: Block = input.parse()?;
-            Ok(Statement::While(condition, block))
-        } else if input.peek(token::Fn) {
-            Ok(Statement::Fn(input.parse::<FnDeclaration>()?))
-        } else {
-            // Expecting Assign or Expr
-            let lhs: Expr = input.parse()?;
-            if input.peek(syn::token::Eq) {
-                let _: syn::token::Eq = input.parse()?;
-                Ok(Statement::Assign(lhs, input.parse::<Expr>()?))
+                let expr: Option<Expr> = if input.peek(syn::token::Eq) {
+                    let _: syn::token::Eq = input.parse()?;
+                    Some(input.parse::<Expr>()?)
+                } else {
+                    None
+                };
+
+                Ok(StatementKind::Let(
+                    mutable,
+                    identifier.to_string(),
+                    ty,
+                    expr,
+                ))
+            } else if input.peek(syn::token::While) {
+                let _: syn::token::While = input.parse()?;
+                let condition: Expr = input.parse()?;
+                let block: Block = input.parse()?;
+                Ok(StatementKind::While(condition, block))
+            } else if input.peek(token::Fn) {
+                Ok(StatementKind::Fn(input.parse::<FnDeclaration>()?))
             } else {
-                Ok(Statement::Expr(lhs))
+                // Expecting Assign or Expr
+                let lhs: Expr = input.parse()?;
+                if input.peek(syn::token::Eq) {
+                    let _: syn::token::Eq = input.parse()?;
+                    Ok(StatementKind::Assign(lhs, input.parse::<Expr>()?))
+                } else {
+                    Ok(StatementKind::Expr(lhs))
+                }
             }
+        };
+
+        let end = input.span();
+        match kind {
+            Ok(k) => Ok(Spanned::new(k, start.join(end).unwrap_or(start))),
+            Err(e) => Err(e),
         }
     }
 }
@@ -487,14 +501,14 @@ impl Parse for Block {
 
             let is_last = content.is_empty();
 
-            let requires_semi = match &stmt {
-                Statement::Let(..) => true,
-                Statement::Assign(..) => !is_last,
-                Statement::Expr(e) => match &e.node {
+            let requires_semi = match &stmt.node {
+                StatementKind::Let(..) => true,
+                StatementKind::Assign(..) => !is_last,
+                StatementKind::Expr(e) => match &e.node {
                     ExprKind::Block(_e) => false,
                     _ => !is_last,
                 },
-                Statement::While(..) | Statement::Fn(..) => false,
+                StatementKind::While(..) | StatementKind::Fn(..) => false,
             };
 
             statements.push(stmt);

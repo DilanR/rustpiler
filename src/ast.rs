@@ -6,6 +6,19 @@ pub struct Spanned<T> {
     pub span: Span,
 }
 
+impl<T> Spanned<T> {
+    pub fn new(node: T, span: Span) -> Self {
+        Self { node, span }
+    }
+
+    pub fn dummy(node: T) -> Self {
+        Self {
+            node,
+            span: Span::call_site(),
+        }
+    }
+}
+
 impl<T: PartialEq> PartialEq for Spanned<T> {
     fn eq(&self, other: &Self) -> bool {
         self.node == other.node
@@ -44,8 +57,10 @@ pub struct FnDeclaration {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Prog(pub Vec<FnDeclaration>);
 
+pub type Statement = Spanned<StatementKind>;
+
 #[derive(Debug, Clone, PartialEq)]
-pub enum Statement {
+pub enum StatementKind {
     Let(Mutable, String, Option<Type>, Option<Expr>),
     Assign(Expr, Expr),
     While(Expr, Block),
@@ -155,7 +170,7 @@ impl Block {
 
 impl From<Expr> for Statement {
     fn from(expr: Expr) -> Self {
-        Statement::Expr(expr)
+        Spanned::dummy(StatementKind::Expr(expr))
     }
 }
 

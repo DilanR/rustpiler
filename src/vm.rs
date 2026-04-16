@@ -1,6 +1,6 @@
 use crate::ast::{
     Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Mutable, Prog, Statement,
-    Type, UnOp,
+    StatementKind, Type, UnOp,
 };
 use crate::common::Eval;
 use crate::env;
@@ -233,12 +233,12 @@ impl VM {
     }
 
     pub fn eval_stmt(&mut self, stmt: &Statement) -> Result<Val, Error> {
-        match stmt {
-            Statement::Let(mutable, id, ty, expr) => self.eval_stmt_let(mutable, id, ty, expr),
-            Statement::Assign(lhs, rhs) => self.eval_stmt_assign(lhs, rhs),
-            Statement::While(cond, block) => self.eval_stmt_while(cond, block),
-            Statement::Expr(expr) => self.eval_expr(expr),
-            Statement::Fn(fn_declaration) => self.eval_stmt_fn(fn_declaration),
+        match &stmt.node {
+            StatementKind::Let(mutable, id, ty, expr) => self.eval_stmt_let(mutable, id, ty, expr),
+            StatementKind::Assign(lhs, rhs) => self.eval_stmt_assign(lhs, rhs),
+            StatementKind::While(cond, block) => self.eval_stmt_while(cond, block),
+            StatementKind::Expr(expr) => self.eval_expr(expr),
+            StatementKind::Fn(fn_declaration) => self.eval_stmt_fn(fn_declaration),
         }
     }
 
@@ -282,8 +282,8 @@ impl VM {
 
         // add all functions to scope such they are evaluable
         for stmt in &block.statements {
-            match stmt {
-                Statement::Fn(f) => {
+            match &stmt.node {
+                StatementKind::Fn(f) => {
                     let this = &mut self.env;
                     let f = f.to_owned();
                     this.functions.last_mut().unwrap().insert(f.id.clone(), f);
