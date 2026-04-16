@@ -47,7 +47,7 @@ impl Parse for Literal {
                 let e: Expr = content.parse()?;
                 return Err(Error::new(
                     content.span(),
-                    format!("Expected Unit found: {}", content),
+                    "expected `()` (unit), found expression",
                 ));
             }
         }
@@ -205,10 +205,10 @@ fn parse_operand(input: ParseStream) -> Result<Expr> {
         }
     } else if input.peek(Token![-]) || input.peek(Token![!]) {
         let op: UnOp = input.parse()?;
-        let e: Expr = input.parse()?; // this is correct now
+        let e = parse_operand(input)?;
         ExprKind::UnOp(op, Box::new(e))
     } else if input.peek(Ident) {
-        return parse_ident_or_call(input); // IMPORTANT: already must return Expr
+        return parse_ident_or_call(input);
     } else if input.peek(token::Brace) {
         ExprKind::Block(input.parse::<Block>()?)
     } else if input.peek(Token![if]) {
@@ -220,7 +220,7 @@ fn parse_operand(input: ParseStream) -> Result<Expr> {
             let _: Token![else] = input.parse()?;
             if input.peek(Token![if]) {
                 let else_block: Expr = input.parse()?;
-                Some(else_block.into()) // this is OK if you implemented From<Expr> for Block
+                Some(else_block.into())
             } else {
                 Some(input.parse::<Block>()?)
             }
@@ -233,7 +233,7 @@ fn parse_operand(input: ParseStream) -> Result<Expr> {
         let lit: Literal = input.parse()?;
         ExprKind::Lit(lit)
     } else {
-        return Err(Error::new(input.span(), "Invalid operand!"));
+        return Err(input.error("Invalid operand!"));
     };
 
     let end = input.span();
@@ -271,11 +271,7 @@ fn parse_binary_op_expr(input: ParseStream, left: Expr, min_prio: u8) -> Result<
     let right = parse_binary_op_expr(input, right, next_min)?;
 
     // combine and continue parsing more operators at or above min_prio
-    let new_left = expr(
-        input.span(),
-        input.span(),
-        ExprKind::bin_op(op, left, right),
-    );
+    let new_left = expr(left.span, right.span, ExprKind::bin_op(op, left, right));
     parse_binary_op_expr(input, new_left, min_prio)
 }
 
@@ -349,6 +345,7 @@ impl Parse for Type {
         // to a token stream (`quote`) and turn that into a String
         // and turn that into an &str (`as_str`)
 
+        let start = input.span();
         let syn_type: syn::Type = input.parse()?;
         let token_stream = quote!(#syn_type);
         let token_string = token_stream.to_string();
@@ -359,10 +356,7 @@ impl Parse for Type {
             "String" => Type::String,
             "()" => Type::Unit,
             other => {
-                return Err(Error::new(
-                    input.span(),
-                    format!("Unsupported Type {}", other),
-                ));
+                return Err(Error::new(start, format!("Unsupported Type {}", other)));
             }
         };
         Ok(ty)
@@ -423,7 +417,7 @@ impl Parse for Parameters {
             }
             // params can have extra comma for last argument
             if content.peek(syn::token::Comma) {
-                let _: syn::token::Comma = input.parse()?;
+                let _: syn::token::Comma = content.parse()?;
             }
             Ok(Parameters(params))
         }
@@ -565,7 +559,7 @@ impl Parse for Block {
                 let _: Token![;] = content.parse()?;
                 semi = true;
             } else if requires_semi {
-                return Err(Error::new(content.span(), "expected ;"));
+                return Err(content.error("expected ;"));
             } else {
                 semi = false;
             }
