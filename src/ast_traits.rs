@@ -10,6 +10,15 @@ pub fn expr(kind: ExprKind) -> Expr {
     }
 }
 
+impl From<ExprKind> for Expr {
+    fn from(kind: ExprKind) -> Self {
+        Spanned {
+            node: kind,
+            span: proc_macro2::Span::call_site(),
+        }
+    }
+}
+
 // Utility functions/traits for your AST here.
 impl ExprKind {
     pub fn bin_op(o: BinOp, left: Expr, right: Expr) -> Self {

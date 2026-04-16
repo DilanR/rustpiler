@@ -1,6 +1,7 @@
 use crate::ast::{Literal, Type};
 use crate::vm::Val;
 use mips::error;
+use proc_macro2::Span;
 use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
@@ -57,8 +58,12 @@ pub enum VmError {
 
 #[derive(Debug, Error, Clone)]
 pub enum TypeError {
-    #[error("type mismatch: expected {expected}, got {got}")]
-    InferenceMismatch { expected: Type, got: Type },
+    #[error("type mismatch at {range}\nExpected {expected}, got {got}")]
+    InferenceMismatch {
+        expected: Type,
+        got: Type,
+        range: ErrRange,
+    },
 
     #[error("Uninitialized value {0} with no explicit type")]
     UnInitType(String),
@@ -94,5 +99,39 @@ impl From<String> for Error {
 impl From<&str> for Error {
     fn from(s: &str) -> Self {
         Error::Message(s.to_owned())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ErrRange {
+    pub start_line: usize,
+    pub start_column: usize,
+    pub end_line: usize,
+    pub end_column: usize,
+}
+
+impl From<Span> for ErrRange {
+    fn from(span: Span) -> Self {
+        let start = span.start();
+        let end = span.end();
+
+        Self {
+            start_line: start.line,
+            start_column: start.column,
+            end_line: end.line,
+            end_column: end.column,
+        }
+    }
+}
+
+use std::fmt;
+
+impl fmt::Display for ErrRange {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "l{}, c{} to l{}, c{}",
+            self.start_line, self.start_column, self.end_line, self.end_column
+        )
     }
 }

@@ -109,7 +109,9 @@ impl Cli {
             println!("Warning: Generated code is not used")
         }
         match (self.code_gen, self.load_asm.clone()) {
-            (true, None) => Ok(parsed_ast.eval().context("Code generation failed")?),
+            (true, None) => Ok(parsed_ast
+                .eval()
+                .map_err(|e| anyhow::anyhow!(e.to_string()))?),
 
             (false, None) => Err(anyhow::anyhow!("Error: Flag -c (--code-gen) is required")),
 
