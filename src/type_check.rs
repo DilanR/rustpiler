@@ -1,5 +1,3 @@
-
-
 use crate::{
     ast::{Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Prog, Statement, Type},
     common::Eval,
@@ -118,7 +116,7 @@ impl TypeChecker {
             }
             Statement::Expr(expr) => Ok(self.check_expr(expr)?),
             Statement::Fn(fn_decl) => {
-                let params_type: Vec<AnnotatedType> = fn_decl
+                let _params_type: Vec<AnnotatedType> = fn_decl
                     .parameters
                     .0
                     .iter()

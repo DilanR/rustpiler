@@ -219,7 +219,7 @@ impl CodegenVm {
         }
     }
 
-    fn codegen_expr_binop(&mut self, bin_op: BinOp, lhs: &Expr, rhs: &Expr) -> Result<(), Error> {
+    fn codegen_expr_binop(&mut self, bin_op: BinOp, _lhs: &Expr, _rhs: &Expr) -> Result<(), Error> {
         self.env.pop_from_stack(t1);
         self.env.pop_from_stack(t0);
         match bin_op {
@@ -247,7 +247,7 @@ impl CodegenVm {
         Ok(())
     }
 
-    fn codegen_expr_unop(&mut self, un_op: UnOp, expr: &Expr) -> Result<(), Error> {
+    fn codegen_expr_unop(&mut self, un_op: UnOp, _expr: &Expr) -> Result<(), Error> {
         self.env.pop_from_stack(t0);
         match un_op {
             UnOp::Neg => self.env.add_instr(subu(t0, zero, t0)),

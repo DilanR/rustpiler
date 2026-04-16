@@ -246,7 +246,7 @@ impl VM {
         &mut self,
         mutable: &Mutable,
         id: &str,
-        ty: &Option<Type>,
+        _ty: &Option<Type>,
         expr: &Option<Expr>,
     ) -> Result<Val, Error> {
         let val = match expr {

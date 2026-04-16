@@ -114,7 +114,7 @@ impl Cli {
 
             (false, None) => Err(anyhow::anyhow!("Error: Flag -c (--code-gen) is required")),
 
-            (false, Some(p)) => unimplemented!("load-asm"),
+            (false, Some(_p)) => unimplemented!("load-asm"),
 
             (true, Some(_)) => Err(anyhow::anyhow!(
                 "Error: Flag --code-gen and --load-asm are mutually exclusive"

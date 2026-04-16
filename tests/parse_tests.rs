@@ -142,14 +142,6 @@ mod parse_unop {
     }
 }
 
-// TODO: gather to span helpers
-fn expr(kind: ExprKind) -> Expr {
-    Spanned {
-        node: kind,
-        span: proc_macro2::Span::call_site(),
-    }
-}
-
 #[cfg(test)]
 mod parse_expr {
     #![allow(clippy::all)]
@@ -247,27 +239,27 @@ mod parse_expr {
     // Some helpers for building Expr ASTs.
 
     fn add<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        expr(ExprKind::bin_op(BinOp::Add, left.into(), right.into()))
+        Spanned::dummy(ExprKind::bin_op(BinOp::Add, left.into(), right.into()))
     }
 
     fn mul<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        expr(ExprKind::bin_op(BinOp::Mul, left.into(), right.into()))
+        Spanned::dummy(ExprKind::bin_op(BinOp::Mul, left.into(), right.into()))
     }
 
     fn or<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        expr(ExprKind::bin_op(BinOp::Or, left.into(), right.into()))
+        Spanned::dummy(ExprKind::bin_op(BinOp::Or, left.into(), right.into()))
     }
 
     fn and<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        expr(ExprKind::bin_op(BinOp::And, left.into(), right.into()))
+        Spanned::dummy(ExprKind::bin_op(BinOp::And, left.into(), right.into()))
     }
 
     fn eq<T1: Into<Expr>, T2: Into<Expr>>(left: T1, right: T2) -> Expr {
-        expr(ExprKind::bin_op(BinOp::Eq, left.into(), right.into()))
+        Spanned::dummy(ExprKind::bin_op(BinOp::Eq, left.into(), right.into()))
     }
 
     pub fn paren(_expr: Expr) -> Expr {
-        expr(ExprKind::Par(Box::new(_expr)))
+        Spanned::dummy(ExprKind::Par(Box::new(_expr)))
     }
 
     // Here are some test cases that directly examine the AST that is built from the expressions to
@@ -378,7 +370,7 @@ mod parse_block {
     #[test]
     fn test_block_expr_fail() {
         let ts: proc_macro2::TokenStream = "{ let a = }".parse().unwrap();
-        let stmt: Result<Statement> = syn::parse2(ts);
+        let stmt: Result<StatementKind> = syn::parse2(ts);
         println!("stmt {:?}", stmt);
         assert!(stmt.is_err());
     }
@@ -748,50 +740,50 @@ mod parse_statement {
 
     #[test]
     fn test_statement_let_ty_expr() {
-        let stmt: Statement = parse("let a: i32 = 2");
-        let expected = Statement::Let(
+        let stmt: StatementKind = parse("let a: i32 = 2");
+        let expected = StatementKind::Let(
             Mutable(false),
             "a".to_string(),
             Some(Type::I32),
-            Some(expr(ExprKind::Lit(Literal::Int(2)))),
+            Some(Spanned::dummy(ExprKind::Lit(Literal::Int(2)))),
         );
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_let_mut_ty_expr() {
-        let stmt: Statement = parse("let mut a: i32 = 2");
-        let expected = Statement::Let(
+        let stmt: StatementKind = parse("let mut a: i32 = 2");
+        let expected = StatementKind::Let(
             Mutable(true),
             "a".to_string(),
             Some(Type::I32),
-            Some(expr(ExprKind::Lit(Literal::Int(2)))),
+            Some(Spanned::dummy(ExprKind::Lit(Literal::Int(2)))),
         );
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_let() {
-        let stmt: Statement = parse("let a");
-        let expected = Statement::Let(Mutable(false), "a".to_string(), None, None);
+        let stmt: StatementKind = parse("let a");
+        let expected = StatementKind::Let(Mutable(false), "a".to_string(), None, None);
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_assign() {
-        let stmt: Statement = parse("a = false");
-        let expected = Statement::Assign(
-            expr(ExprKind::Ident("a".to_string())),
-            expr(ExprKind::Lit(Literal::Bool(false))),
+        let stmt: StatementKind = parse("a = false");
+        let expected = StatementKind::Assign(
+            Spanned::dummy(ExprKind::Ident("a".to_string())),
+            Spanned::dummy(ExprKind::Lit(Literal::Bool(false))),
         );
         assert_eq!(stmt, expected);
     }
 
     #[test]
     fn test_statement_while() {
-        let stmt: Statement = parse("while a {}");
-        let expected = Statement::While(
-            expr(ExprKind::Ident("a".to_string())),
+        let stmt: StatementKind = parse("while a {}");
+        let expected = StatementKind::While(
+            Spanned::dummy(ExprKind::Ident("a".to_string())),
             Block {
                 statements: vec![],
                 semi: false,
@@ -802,11 +794,11 @@ mod parse_statement {
 
     #[test]
     fn test_statement_expr() {
-        let stmt: Statement = parse("a");
+        let stmt: StatementKind = parse("a");
         println!("stmt {:?}", stmt);
         assert_eq!(
             stmt,
-            Statement::Expr(expr(ExprKind::Ident("a".to_string())))
+            StatementKind::Expr(Spanned::dummy(ExprKind::Ident("a".to_string())))
         );
     }
 
@@ -814,14 +806,14 @@ mod parse_statement {
 
     #[test]
     fn fail_tests() {
-        assert_parse_fail::<Statement>("let a i32;");
-        assert_parse_fail::<Statement>("let a: I32;");
-        assert_parse_fail::<Statement>("let a: i32 == 3;");
-        assert_parse_fail::<Statement>("let 123;");
-        assert_parse_fail::<Statement>("let 123: i32;");
-        assert_parse_fail::<Statement>("123_var = 3;");
-        assert_parse_fail::<Statement>("while true { let x }");
-        assert_parse_fail::<Statement>("while {}");
+        assert_parse_fail::<StatementKind>("let a i32;");
+        assert_parse_fail::<StatementKind>("let a: I32;");
+        assert_parse_fail::<StatementKind>("let a: i32 == 3;");
+        assert_parse_fail::<StatementKind>("let 123;");
+        assert_parse_fail::<StatementKind>("let 123: i32;");
+        assert_parse_fail::<StatementKind>("123_var = 3;");
+        assert_parse_fail::<StatementKind>("while true { let x }");
+        assert_parse_fail::<StatementKind>("while {}");
         // NOTE: we could also test something like "123 = 3", but we will want to allow the
         // left-hand side to be an expression (such as `xs[0] = 3`). So checking what kinds of
         // expressions are allowed on the left of an assignment would require a bit more work and

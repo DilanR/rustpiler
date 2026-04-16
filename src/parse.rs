@@ -43,7 +43,7 @@ impl Parse for Literal {
             if content.is_empty() {
                 return Ok(Literal::Unit);
             } else {
-                let e: Expr = content.parse()?;
+                let _e: Expr = content.parse()?;
                 return Err(Error::new(
                     content.span(),
                     "expected `()` (unit), found expression",
@@ -161,30 +161,6 @@ fn peek_prio(input: ParseStream) -> u8 {
     input.fork().parse::<BinOp>().unwrap().priority()
 }
 
-/// Check if the next token is some (unary) operator.
-fn peek_unop(input: ParseStream) -> bool {
-    input.fork().parse::<UnOp>().is_ok()
-}
-
-/// Check if we've reached the end of a binary operator expression.
-/// Depending on how expressions are parsed, an expression is usually terminated by the
-/// input running out. But we may also run into some token that means the expression is done.
-fn end_of_expr(input: ParseStream) -> bool {
-    if input.is_empty() {
-        true
-    } else {
-        // These may not be needed in practice (if we use something like
-        // `syn::parenthesized!(...)` or `parse_terminated` for example).
-        // But, in principle, we could for example reach the end of an array element or function
-        // argument, etc. So let's be general.
-        input.peek(Token![,])
-            || input.peek(Token![;])
-            || input.peek(syn::token::Brace)
-            || input.peek(syn::token::Bracket)
-            || input.peek(syn::token::Paren)
-    }
-}
-
 /// Parse what could be an operand, i.e. the first part of a binary expression.
 /// This could be a literal, an identifier, a unary op, or an expression in parentheses.
 /// For example: `3 + ...`, `x + ...`, `!true && ...`, `(1+2) + ...`, or `[1,2,3][0] + ...`.
@@ -299,37 +275,6 @@ fn parse_ident_or_call(input: ParseStream) -> Result<Expr> {
     let end = input.span();
 
     Ok(expr(start, end, kind))
-}
-
-//
-// We want to parse strings like
-// `if expr { then block }`
-// and
-// `if expr { then block } else { else block }
-//
-// The else arm is optional
-struct IfThenOptElse(Expr, Block, Option<Block>);
-
-impl Parse for IfThenOptElse {
-    fn parse(input: ParseStream) -> Result<IfThenOptElse> {
-        let _: Token![if] = input.parse()?;
-        let condition: Expr = input.parse()?;
-        let then_block: Block = input.parse()?;
-        let opt_block = if input.peek(Token![else]) {
-            let _: Token![else] = input.parse()?;
-            if input.peek(Token![if]) {
-                //nested else if
-                let opt_block: Expr = input.parse()?;
-                Some(opt_block.into())
-            } else {
-                let else_block: Block = input.parse()?;
-                Some(else_block)
-            }
-        } else {
-            None
-        };
-        Ok(Self(condition, then_block, opt_block))
-    }
 }
 
 use quote::quote;
@@ -546,7 +491,7 @@ impl Parse for Block {
                 Statement::Let(..) => true,
                 Statement::Assign(..) => !is_last,
                 Statement::Expr(e) => match &e.node {
-                    ExprKind::Block(e) => false,
+                    ExprKind::Block(_e) => false,
                     _ => !is_last,
                 },
                 Statement::While(..) | Statement::Fn(..) => false,
