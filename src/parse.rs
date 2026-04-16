@@ -2,11 +2,10 @@ use crate::ast::{
     Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Mutable, Parameter,
     Parameters, Prog, Spanned, Statement, Type, UnOp,
 };
-use proc_macro2::token_stream;
 use syn::{
-    Error, Ident, Result, Token, parenthesized,
+    Error, Ident, Result, Token,
     parse::{Parse, ParseStream},
-    token::{self, Token},
+    token::{self},
 };
 
 /// A small helper function for parsing source strings.

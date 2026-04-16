@@ -1,4 +1,4 @@
-use crate::ast::{Block, Literal, Type};
+use crate::ast::{Block, Type};
 use crate::common::Eval;
 use crate::parse::{parse, try_parse};
 use crate::vm::Val;

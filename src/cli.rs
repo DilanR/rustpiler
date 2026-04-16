@@ -1,14 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, bail};
-use clap::{Parser, arg};
+use clap::Parser;
 use mips::instr::Instr;
 use mips::rf::Reg;
 use mips::vm::Mips;
 use regex::Regex;
 
 use crate::ast::Prog;
-use crate::code_gen::CodegenVm;
 use crate::common::Eval;
 use crate::parse;
 use crate::type_check::TypeChecker;

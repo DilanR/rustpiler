@@ -1,6 +1,5 @@
-use crate::ast::{Literal, Type};
+use crate::ast::Type;
 use crate::vm::Val;
-use mips::error;
 use proc_macro2::Span;
 use thiserror::Error;
 

@@ -1,7 +1,7 @@
 // Extra traits implemented for AST
 
 use crate::ast::*;
-use std::fmt::{self, write};
+use std::fmt::{self};
 
 pub fn expr(kind: ExprKind) -> Expr {
     Spanned {

@@ -1,10 +1,7 @@
-use std::{collections::HashMap, hash::Hash};
 
-use derive_more::Constructor;
 
 use crate::{
     ast::{Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Prog, Statement, Type},
-    ast_traits,
     common::Eval,
     env::{AnnotatedType, TypeEnv},
     error::{Error, TypeError},
