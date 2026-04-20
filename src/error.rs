@@ -132,6 +132,19 @@ pub struct ErrRange {
     pub end_column: usize,
 }
 
+impl ErrRange {
+    pub fn dummy() -> Self {
+        let dummy_line_column = proc_macro2::Span::call_site().start();
+
+        Self {
+            start_line: dummy_line_column.line,
+            start_column: dummy_line_column.column,
+            end_line: dummy_line_column.line,
+            end_column: dummy_line_column.column,
+        }
+    }
+}
+
 impl From<Span> for ErrRange {
     fn from(span: Span) -> Self {
         let start = span.start();
