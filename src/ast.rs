@@ -46,8 +46,10 @@ pub struct Parameter {
     pub ty: Type,
 }
 
+pub type FnDeclaration = Spanned<FnDeclarationKind>;
+
 #[derive(Debug, Clone, PartialEq)]
-pub struct FnDeclaration {
+pub struct FnDeclarationKind {
     pub id: String,
     pub parameters: Parameters,
     pub ty: Option<Type>,
