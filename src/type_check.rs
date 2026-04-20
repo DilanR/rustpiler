@@ -28,7 +28,15 @@ impl TypeChecker {
 
     pub fn check_expr(&mut self, expr: &Expr) -> Result<Type, Error> {
         match &expr.node {
-            ExprKind::Ident(l) => Ok(self.env.lookup_binding(l)?.ty),
+            ExprKind::Ident(l) => match self.env.lookup_binding(l) {
+                Some(binding) => Ok(binding.ty),
+                None => Err(TypeError::Unknown {
+                    kind: crate::error::UnknownKind::Variable,
+                    name: l.to_owned(),
+                    range: expr.span.into(),
+                }
+                .into()),
+            },
             ExprKind::Lit(literal) => Ok(literal.clone().into()),
             ExprKind::BinOp(bin_op, lhs, rhs) => {
                 let lhs_type = self.check_expr(lhs)?;
@@ -68,14 +76,18 @@ impl TypeChecker {
     pub fn check_stmt(&mut self, stmt: &Statement) -> Result<Type, Error> {
         match &stmt.node {
             StatementKind::Let(mutable, id, ty, expr) => match (ty, expr) {
-                (None, None) => Err(TypeError::UnInitType(id.to_owned()).into()),
+                (None, None) => Err(TypeError::Uninitialized {
+                    name: id.into(),
+                    range: stmt.span.into(),
+                }
+                .into()),
                 (None, Some(e)) => {
-                    let infered_type = self.check_expr(e)?;
+                    let inferred_type = self.check_expr(e)?;
                     self.env.define_binding(
                         id,
-                        AnnotatedType::new(infered_type.clone(), mutable.0, true),
+                        AnnotatedType::new(inferred_type.clone(), mutable.0, true),
                     );
-                    Ok(infered_type)
+                    Ok(inferred_type)
                 }
                 (Some(t), None) => {
                     self.env
@@ -93,12 +105,24 @@ impl TypeChecker {
                 //check lhs is mutable or unInit and identifier
                 let (lhs_at, id) = match &lhs.node {
                     ExprKind::Ident(id) => match self.env.lookup_binding(id) {
-                        Ok(t) => (t, id),
-                        Err(e) => {
-                            return Err(e);
+                        Some(t) => (t, id),
+                        None => {
+                            return Err(TypeError::Unknown {
+                                kind: crate::error::UnknownKind::Variable,
+                                name: id.clone(),
+                                range: lhs.span.into(),
+                            }
+                            .into());
                         }
                     },
-                    _ => return Err(TypeError::AssignmentToNonIdent(lhs.to_string()).into()),
+
+                    _ => {
+                        return Err(TypeError::Assignment {
+                            kind: crate::error::AssignmentErrorKind::NotIdent,
+                            range: lhs.span.into(),
+                        }
+                        .into());
+                    }
                 };
 
                 let ty = unify(rhs, lhs_at.ty, self.check_expr(rhs)?)?;
@@ -106,7 +130,13 @@ impl TypeChecker {
                 let new_at = match (lhs_at.mutable, lhs_at.is_initialized) {
                     (true, _) => AnnotatedType::new(ty, true, true),
                     (false, false) => AnnotatedType::new(ty, false, true),
-                    _ => return Err(TypeError::NonMutableAssignment().into()),
+                    _ => {
+                        return Err(TypeError::Assignment {
+                            kind: crate::error::AssignmentErrorKind::NotMutable,
+                            range: lhs.span.into(),
+                        }
+                        .into());
+                    }
                 };
 
                 self.env.define_binding(id, new_at);
@@ -174,7 +204,7 @@ impl TypeChecker {
             match arguments.0.first() {
                 Some(str_arg) => unify(expr, self.check_expr(str_arg)?, Type::String)?,
                 None => {
-                    return Err(TypeError::InferenceMismatch {
+                    return Err(TypeError::TypeMismatch {
                         expected: Type::String,
                         got: Type::Unit,
                         range: expr.span.into(),
@@ -189,7 +219,15 @@ impl TypeChecker {
 
             Ok(Type::Unit)
         } else {
-            let fn_decl = self.env.lookup_function(id)?;
+            let Some(fn_decl) = self.env.lookup_function(id) else {
+                return Err(TypeError::Unknown {
+                    kind: crate::error::UnknownKind::Function,
+                    name: id.to_owned(),
+                    range: expr.span.into(),
+                }
+                .into());
+            };
+
             //check arity
             if fn_decl.parameters.0.len() != arguments.0.len() {
                 return Err(Error::ParameterArityMismatch {
@@ -201,7 +239,14 @@ impl TypeChecker {
 
             // check all parameters have a binding and match with arguments
             for (param, arg) in fn_decl.parameters.0.iter().zip(arguments.0.iter()) {
-                let binding = self.env.lookup_binding(&param.id)?;
+                let Some(binding) = self.env.lookup_binding(&param.id) else {
+                    return Err(TypeError::Unknown {
+                        kind: crate::error::UnknownKind::Variable,
+                        name: param.id.to_owned(),
+                        range: expr.span.into(),
+                    }
+                    .into());
+                };
                 unify(arg, binding.ty, self.check_expr(arg)?)?;
             }
 
@@ -232,10 +277,17 @@ impl TypeChecker {
 
     pub fn check_prog(&mut self, prog: &Prog) -> Result<Type, Error> {
         // Go through each fn and put in env check for duplicates
+        let mut seen = std::collections::HashSet::new();
+
         for fn_decl in &prog.0 {
             let id = fn_decl.id.clone();
-            if self.env.lookup_function(&id).is_ok() {
-                return Err(TypeError::DuplicateFunction(id).into());
+            if !seen.insert(id.clone()) {
+                return Err(TypeError::Duplicate {
+                    kind: crate::error::DuplicateKind::Function,
+                    name: id,
+                    range: crate::error::ErrRange::dummy(),
+                }
+                .into());
             }
             self.env.define_function(fn_decl.to_owned());
         }
@@ -245,7 +297,17 @@ impl TypeChecker {
         }
 
         //valid program needs main
-        let main = self.env.lookup_function("main")?;
+        let main = match self.env.lookup_function("main") {
+            Some(f) => f,
+            None => {
+                return Err(TypeError::Unknown {
+                    kind: crate::error::UnknownKind::Function,
+                    name: "main".to_string(),
+                    range: crate::error::ErrRange::dummy(),
+                }
+                .into());
+            }
+        };
 
         self.check_fn(&main)
     }
@@ -260,7 +322,7 @@ impl Default for TypeChecker {
 fn unify(expr: &Expr, got: Type, expected: Type) -> Result<Type, Error> {
     match got == expected {
         true => Ok(expected),
-        false => Err(TypeError::InferenceMismatch {
+        false => Err(TypeError::TypeMismatch {
             expected,
             got,
             range: expr.span.into(),
