@@ -150,6 +150,7 @@ impl TypeChecker {
             StatementKind::Expr(expr) => Ok(self.check_expr(expr)?),
             StatementKind::Fn(fn_decl) => {
                 let _params_type: Vec<AnnotatedType> = fn_decl
+                    .node
                     .parameters
                     .0
                     .iter()
@@ -160,7 +161,7 @@ impl TypeChecker {
                     })
                     .collect();
 
-                AnnotatedType::new(fn_decl.ty.clone().unwrap_or(Type::Unit), false, true);
+                AnnotatedType::new(fn_decl.node.ty.clone().unwrap_or(Type::Unit), false, true);
 
                 Ok(Type::Unit)
             }
@@ -229,16 +230,16 @@ impl TypeChecker {
             };
 
             //check arity
-            if fn_decl.parameters.0.len() != arguments.0.len() {
+            if fn_decl.node.parameters.0.len() != arguments.0.len() {
                 return Err(Error::ParameterArityMismatch {
-                    id: fn_decl.id.clone(),
-                    expected: fn_decl.parameters.0.len(),
+                    id: fn_decl.node.id.clone(),
+                    expected: fn_decl.node.parameters.0.len(),
                     got: arguments.0.len(),
                 });
             };
 
             // check all parameters have a binding and match with arguments
-            for (param, arg) in fn_decl.parameters.0.iter().zip(arguments.0.iter()) {
+            for (param, arg) in fn_decl.node.parameters.0.iter().zip(arguments.0.iter()) {
                 let Some(binding) = self.env.lookup_binding(&param.id) else {
                     return Err(TypeError::Unknown {
                         kind: crate::error::UnknownKind::Variable,
@@ -250,14 +251,14 @@ impl TypeChecker {
                 unify(arg, binding.ty, self.check_expr(arg)?)?;
             }
 
-            Ok(fn_decl.ty.unwrap_or(Type::Unit))
+            Ok(fn_decl.node.ty.unwrap_or(Type::Unit))
         }
     }
 
     fn check_fn(&mut self, fn_decl: &FnDeclaration) -> Result<Type, Error> {
-        let r_type = fn_decl.ty.clone().unwrap_or(Type::Unit);
+        let r_type = fn_decl.node.ty.clone().unwrap_or(Type::Unit);
         // Add param to bindings
-        for param in fn_decl.parameters.0.iter() {
+        for param in fn_decl.node.parameters.0.iter() {
             self.env.define_binding(
                 &param.id,
                 AnnotatedType {
@@ -269,9 +270,10 @@ impl TypeChecker {
         }
 
         // eval return type for body
-        let body_return_type = self.check_block(&fn_decl.body)?;
+        let body_return_type = self.check_block(&fn_decl.node.body)?;
 
         // compare body return type and fn return type
+        // TODO change sig for unify
         unify(&dummy_expr(), r_type, body_return_type)
     }
 
@@ -280,7 +282,7 @@ impl TypeChecker {
         let mut seen = std::collections::HashSet::new();
 
         for fn_decl in &prog.0 {
-            let id = fn_decl.id.clone();
+            let id = fn_decl.node.id.clone();
             if !seen.insert(id.clone()) {
                 return Err(TypeError::Duplicate {
                     kind: crate::error::DuplicateKind::Function,

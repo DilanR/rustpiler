@@ -4,7 +4,7 @@ use crate::ast::{
 };
 use crate::common::Eval;
 use crate::env;
-use crate::error::{Error, VmError};
+use crate::error::{Error, TypeError, VmError};
 use crate::intrinsics::vm_println;
 use std::collections::HashMap;
 
@@ -193,17 +193,17 @@ impl VM {
             .lookup_fn(ident)
             .ok_or(VmError::NoFunctionFound(ident.to_owned()))?; // check arity of both matches in future match types aswell
         // check arity
-        if func.parameters.0.len() != collected_args.len() {
+        if func.node.parameters.0.len() != collected_args.len() {
             return Err(Error::ParameterArityMismatch {
                 id: ident.to_owned(),
-                expected: func.parameters.0.len(),
+                expected: func.node.parameters.0.len(),
                 got: collected_args.len(),
             });
         }
 
         let mut new_val_scope: HashMap<String, Val> = HashMap::new();
         //match callers args to parameters
-        for (param, arg) in func.parameters.0.iter().zip(collected_args) {
+        for (param, arg) in func.node.parameters.0.iter().zip(collected_args) {
             let val = if param.mutable.0 {
                 Val::Mut(Box::new(arg))
             } else {
@@ -220,7 +220,7 @@ impl VM {
 
         fn_vm.env.values.push(new_val_scope);
 
-        fn_vm.eval_block(&func.body)
+        fn_vm.eval_block(&func.node.body)
     }
 
     pub fn eval_type(&mut self, expr: &Expr, ty: &Option<Type>) -> Result<Val, Error> {
@@ -269,7 +269,14 @@ impl VM {
     pub fn eval_stmt_assign(&mut self, lhs: &Expr, rhs: &Expr) -> Result<Val, Error> {
         let rhs_val = self.eval_expr(rhs)?;
         if let ExprKind::Ident(id) = &lhs.node {
-            self.env.assign_value(id, rhs_val)?;
+            if !self.env.assign_value(id, rhs_val) {
+                return Err(TypeError::Unknown {
+                    kind: crate::error::UnknownKind::Variable,
+                    name: id.to_owned(),
+                    range: lhs.span.into(),
+                }
+                .into());
+            } //TODO: err
             Ok(Val::from(()))
         } else {
             Err(VmError::IllegalAssignment(lhs.to_string()).into())
@@ -286,7 +293,10 @@ impl VM {
                 StatementKind::Fn(f) => {
                     let this = &mut self.env;
                     let f = f.to_owned();
-                    this.functions.last_mut().unwrap().insert(f.id.clone(), f);
+                    this.functions
+                        .last_mut()
+                        .unwrap()
+                        .insert(f.node.id.clone(), f);
                 }
                 _ => continue,
             };
@@ -314,7 +324,7 @@ impl VM {
             .functions
             .last_mut()
             .unwrap()
-            .insert(f.id.clone(), f);
+            .insert(f.node.id.clone(), f);
         Ok(Val::Lit(Literal::Unit))
     }
 
@@ -332,7 +342,10 @@ impl VM {
             {
                 let this = &mut self.env;
                 let f = func.to_owned();
-                this.functions.last_mut().unwrap().insert(f.id.clone(), f);
+                this.functions
+                    .last_mut()
+                    .unwrap()
+                    .insert(f.node.id.clone(), f);
             };
         }
 
@@ -343,7 +356,7 @@ impl VM {
         };
 
         //main should have no args and rtype, only parse body
-        self.eval_block(&main_fn.1.body)
+        self.eval_block(&main_fn.1.node.body)
     }
 
     fn eval_expr_if_then_else(
