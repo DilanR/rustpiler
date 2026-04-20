@@ -57,30 +57,53 @@ pub enum VmError {
 
 #[derive(Debug, Error, Clone)]
 pub enum TypeError {
-    #[error("type mismatch at {range}\nExpected {expected}, got {got}")]
-    InferenceMismatch {
+    #[error("Type mismatch: expected {expected}, got {got}")]
+    TypeMismatch {
         expected: Type,
         got: Type,
         range: ErrRange,
     },
 
-    #[error("Uninitialized value {0} with no explicit type")]
-    UnInitType(String),
+    #[error("Undefined {kind:?} `{name}`")]
+    Unknown {
+        kind: UnknownKind,
+        name: String,
+        range: ErrRange,
+    },
 
-    #[error("Invalid Assignment target {0}")]
-    AssignmentToNonIdent(String),
+    #[error("Assignment error: {kind:?}")]
+    Assignment {
+        kind: AssignmentErrorKind,
+        range: ErrRange,
+    },
 
-    #[error("Assignment target {0} not found")]
-    AssignmentTargetNotFound(String),
+    #[error("Duplicate {kind:?} `{name}`")]
+    Duplicate {
+        kind: DuplicateKind,
+        name: String,
+        range: ErrRange,
+    },
 
-    #[error("NonMutable Assignment")]
-    NonMutableAssignment(),
+    #[error("Uninitialized value `{name}`")]
+    Uninitialized { name: String, range: ErrRange },
+}
 
-    #[error("undefined variable `{0}`")]
-    UndefinedBinding(String),
+#[derive(Debug, Clone)]
+pub enum UnknownKind {
+    Variable,
+    Function,
+}
 
-    #[error("Duplicate function {0} found")]
-    DuplicateFunction(String),
+#[derive(Debug, Clone)]
+pub enum AssignmentErrorKind {
+    NotIdent,
+    NotFound,
+    NotMutable,
+}
+
+#[derive(Debug, Clone)]
+pub enum DuplicateKind {
+    Function,
 }
 
 #[derive(Debug, Error, Clone)]
