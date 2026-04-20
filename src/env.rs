@@ -1,7 +1,6 @@
 use derive_more::Constructor;
 
 use crate::ast::*;
-use crate::error::{Error, TypeError};
 use crate::vm::Val;
 use std::collections::HashMap;
 
@@ -54,7 +53,7 @@ impl Env {
         self.values.last_mut().unwrap().insert(id.to_owned(), val);
     }
 
-    pub fn assign_value(&mut self, id: &str, new_val: Val) -> Result<(), Error> {
+    pub fn assign_value(&mut self, id: &str, new_val: Val) -> bool {
         for scope in self.values.iter_mut().rev() {
             if let Some(existing) = scope.get_mut(id) {
                 match existing {
@@ -65,11 +64,11 @@ impl Env {
                         *existing = new_val;
                     }
                 }
-                return Ok(());
+                return true;
             }
         }
 
-        Err(Error::Message(format!("Undefined variable {}", id)))
+        false
     }
 
     pub fn lookup_fn(&self, name: &str) -> Option<(usize, FnDeclaration)> {
@@ -119,22 +118,22 @@ impl TypeEnv {
         self.bindings.pop();
     }
 
-    pub fn lookup_binding(&self, id: &str) -> Result<AnnotatedType, Error> {
+    pub fn lookup_binding(&self, id: &str) -> Option<AnnotatedType> {
         for scope in self.bindings.iter().rev() {
             if let Some(binding) = scope.get(id) {
-                return Ok(binding.clone());
+                return Some(binding.clone());
             }
         }
-        Err(TypeError::UndefinedBinding(id.to_string()).into())
+        None
     }
 
-    pub fn lookup_function(&self, id: &str) -> Result<FnDeclaration, Error> {
+    pub fn lookup_function(&self, id: &str) -> Option<FnDeclaration> {
         for scope in self.functions.iter().rev() {
             if let Some(func) = scope.get(id) {
-                return Ok(func.clone());
+                return Some(func.clone());
             }
         }
-        Err(Error::UndefinedFunction(id.to_string()))
+        None
     }
 
     pub fn define_binding(&mut self, id: &str, a_ty: AnnotatedType) {
