@@ -318,7 +318,13 @@ impl CodegenVm {
                     let offset = self.env.lookup_value_offset(var)?;
                     self.env.add_instr(sw(t0, offset, fp));
                 } else {
-                    return Err(TypeError::AssignmentToNonIdent(ident.to_string()).into());
+                    // This Shouldn't need to be checked
+                    // assuming reasonable pipeline.
+                    return Err(TypeError::Assignment {
+                        kind: crate::error::AssignmentErrorKind::NotIdent,
+                        range: ident.span.into(),
+                    }
+                    .into());
                 };
             }
             StatementKind::While(cond, block) => {
