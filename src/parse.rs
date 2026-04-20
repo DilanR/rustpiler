@@ -1,6 +1,6 @@
 use crate::ast::{
-    Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Mutable, Parameter,
-    Parameters, Prog, Spanned, Statement, StatementKind, Type, UnOp,
+    Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, FnDeclarationKind, Literal, Mutable,
+    Parameter, Parameters, Prog, Spanned, Statement, StatementKind, Type, UnOp,
 };
 use syn::{
     Error, Ident, Result, Token,
@@ -370,6 +370,8 @@ impl Parse for Parameters {
 
 impl Parse for FnDeclaration {
     fn parse(input: ParseStream) -> Result<FnDeclaration> {
+        let start = input.span();
+
         let _: syn::token::Fn = input.parse()?;
         let identifier: syn::Ident = input.parse()?;
         let parameters: Parameters = input.parse()?;
@@ -383,12 +385,17 @@ impl Parse for FnDeclaration {
 
         let body: Block = input.parse()?;
 
-        Ok(FnDeclaration {
-            id: identifier.to_string(),
-            parameters,
-            ty,
-            body,
-        })
+        let end = input.span();
+
+        Ok(Spanned::new(
+            FnDeclarationKind {
+                id: identifier.to_string(),
+                parameters,
+                ty,
+                body,
+            },
+            start.join(end).unwrap_or(start),
+        ))
     }
 }
 
