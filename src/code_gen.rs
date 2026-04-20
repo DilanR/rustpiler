@@ -342,7 +342,7 @@ impl CodegenVm {
             StatementKind::Expr(expr) => self.codegen_expr(expr)?,
             StatementKind::Fn(fn_declaration) => {
                 // make fn visible in current scope and skip over body at runtime
-                self.env.define_function_label(&fn_declaration.id);
+                self.env.define_function_label(&fn_declaration.node.id);
                 let after_fn_label = self.env.define_label("after_local_fn");
                 self.env.add_instr(b_label(&after_fn_label));
                 self.codegen_fn_decl(fn_declaration)?;
@@ -363,7 +363,7 @@ impl CodegenVm {
         self.env.fn_local_count = 0;
 
         // params need to be above fp
-        for (i, param) in fn_decl.parameters.0.iter().enumerate() {
+        for (i, param) in fn_decl.node.parameters.0.iter().enumerate() {
             let offset = 8 + (i as i16) * 4;
             self.env
                 .values
@@ -374,20 +374,20 @@ impl CodegenVm {
 
         // TODO: fetch correct label for shadowing
         // label for bal
-        let fn_label = self.env.lookup_label(&fn_decl.id)?;
+        let fn_label = self.env.lookup_label(&fn_decl.node.id)?;
         self.env.add_nop_with_label(&fn_label);
         let local_alloc_idx = self.emit_fn_prologue();
 
-        self.codegen_block(&fn_decl.body)?;
-        let returns_unit = matches!(fn_decl.ty, Some(Type::Unit) | None);
+        self.codegen_block(&fn_decl.node.body)?;
+        let returns_unit = matches!(fn_decl.node.ty, Some(Type::Unit) | None);
         if !returns_unit {
             self.env.pop_from_stack(t0);
-        } else if fn_decl.id != "main" {
+        } else if fn_decl.node.id != "main" {
             self.push_unit();
             self.env.pop_from_stack(t0);
         }
 
-        self.emit_fn_epilogue(fn_decl.id == "main", local_alloc_idx);
+        self.emit_fn_epilogue(fn_decl.node.id == "main", local_alloc_idx);
 
         // restore outer scope
         self.env.values = saved_values;
@@ -448,7 +448,7 @@ impl CodegenVm {
 
     pub fn codegen_prog(&mut self, prog: &Prog) -> Result<(i32, Vec<Instr>), Error> {
         for fn_decl in prog.0.iter() {
-            self.env.define_function_label(&fn_decl.id);
+            self.env.define_function_label(&fn_decl.node.id);
         }
 
         let main_label = self.env.lookup_label("main")?;
@@ -489,7 +489,7 @@ impl Eval<Vec<Instr>> for Prog {
     fn eval(&self) -> Result<Vec<Instr>, Error> {
         let mut cg = CodegenVm::new();
         for fn_decl in self.0.iter() {
-            cg.env.define_function_label(&fn_decl.id);
+            cg.env.define_function_label(&fn_decl.node.id);
         }
 
         let main_label = cg.env.lookup_label("main")?;
