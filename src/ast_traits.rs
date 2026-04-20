@@ -264,7 +264,7 @@ impl fmt::Display for Arguments {
     }
 }
 
-impl fmt::Display for FnDeclaration {
+impl fmt::Display for FnDeclarationKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -289,7 +289,7 @@ fn fn_declaration_test() {
         ty: Type::I32,
     }]);
 
-    let func = FnDeclaration {
+    let func = FnDeclarationKind {
         id: "test_fn".to_string(),
         parameters: params,
         ty: Some(Type::I32),

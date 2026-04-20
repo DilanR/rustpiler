@@ -81,7 +81,10 @@ impl Env {
     }
 
     pub fn define_fn(&mut self, f: FnDeclaration) {
-        self.functions.last_mut().unwrap().insert(f.id.clone(), f);
+        self.functions
+            .last_mut()
+            .unwrap()
+            .insert(f.node.id.clone(), f);
     }
 }
 
@@ -147,7 +150,7 @@ impl TypeEnv {
         self.functions
             .last_mut()
             .unwrap()
-            .insert(fn_decl.id.clone(), fn_decl);
+            .insert(fn_decl.node.id.clone(), fn_decl);
     }
 }
 

@@ -1,11 +1,11 @@
-use crate::ast::{Block, FnDeclaration, Mutable, Parameter, Parameters, Type};
+use crate::ast::{Block, FnDeclarationKind, Mutable, Parameter, Parameters, Type};
 use regex::Regex;
 // Implementation of intrinsics for the vm
 use crate::ast::Literal;
 pub type Intrinsic = fn(Vec<Literal>) -> Literal;
-pub fn vm_println() -> (FnDeclaration, Intrinsic) {
+pub fn vm_println() -> (FnDeclarationKind, Intrinsic) {
     (
-        FnDeclaration {
+        FnDeclarationKind {
             id: "println!".to_string(),
             parameters: Parameters(vec![
                 Parameter {
