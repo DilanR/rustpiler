@@ -330,7 +330,7 @@ impl VM {
         self.env.push_scope();
 
         // add all functions to scope such they are evaluable
-        for stmt in &block.statements {
+        for stmt in &block.node.statements {
             match &stmt.node {
                 StatementKind::Fn(f) => {
                     let this = &mut self.env;
@@ -346,13 +346,13 @@ impl VM {
 
         let mut last_val = Val::Lit(Literal::Unit);
 
-        for stmt in &block.statements {
+        for stmt in &block.node.statements {
             last_val = self.eval_stmt(stmt)?;
         }
 
         self.env.pop_scope();
 
-        if block.semi {
+        if block.node.semi {
             Ok(Val::Lit(Literal::Unit))
         } else {
             Ok(last_val)
