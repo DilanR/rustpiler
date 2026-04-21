@@ -15,6 +15,52 @@ pub enum Val {
     Mut(Box<Val>),
 }
 
+impl Val {
+    fn get_bool(&self) -> bool {
+        match self {
+            Val::Lit(Literal::Bool(b)) => *b,
+            _ => panic!("internal error: expected bool, got {:?}", self),
+        }
+    }
+
+    fn get_int(&self) -> i32 {
+        match self {
+            Val::Lit(Literal::Int(i)) => *i,
+            _ => panic!("internal error: expected i32, got {:?}", self),
+        }
+    }
+
+    fn get_string(&self) -> String {
+        match self {
+            Val::Lit(Literal::String(i)) => i.clone(),
+            _ => panic!("internal error: expected string, got {:?}", self),
+        }
+    }
+    fn get_unit(&self) -> () {
+        match self {
+            Val::Lit(Literal::Unit) => (),
+            _ => panic!("internal error: expected (), got {:?}", self),
+        }
+    }
+    pub fn check_type(&self, ty: &Type) -> Result<(), Error> {
+        match ty {
+            Type::I32 => {
+                self.get_int();
+            }
+            Type::Bool => {
+                self.get_bool();
+            }
+            Type::String => {
+                self.get_string();
+            }
+            Type::Unit => {
+                self.get_unit();
+            }
+        }
+        Ok(())
+    }
+}
+
 // Helper for Op
 impl BinOp {
     // Evaluate operator to literal
@@ -329,7 +375,7 @@ impl VM {
     }
 
     fn eval_stmt_while(&mut self, cond: &Expr, block: &Block) -> Result<Val, Error> {
-        while self.eval_expr(cond)?.get_bool()? {
+        while self.eval_expr(cond)?.get_bool() {
             self.eval_block(block)?;
         }
         //while block always returns Unit
@@ -366,7 +412,7 @@ impl VM {
         block1: &Option<Block>,
     ) -> Result<Val, Error> {
         let cond = self.eval_expr(expr)?;
-        if cond.get_bool()? {
+        if cond.get_bool() {
             Ok(self.eval_block(block)?)
         } else {
             match block1 {

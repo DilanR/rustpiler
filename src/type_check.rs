@@ -6,7 +6,6 @@ use crate::{
     common::Eval,
     env::{AnnotatedType, TypeEnv},
     error::{Error, TypeError},
-    vm::Val,
 };
 
 fn dummy_expr() -> Expr {
@@ -356,60 +355,3 @@ impl Eval<Type> for Prog {
 
 // Helpers for Val
 // Alternatively implement the TryFrom trait
-impl Val {
-    pub fn get_bool(&self) -> Result<bool, Error> {
-        match self {
-            Val::Lit(Literal::Bool(b)) => Ok(*b),
-            other => Err(Error::TypeMismatch {
-                expected: "bool",
-                got: other.clone(),
-            }),
-        }
-    }
-
-    pub fn get_int(&self) -> Result<i32, Error> {
-        match self {
-            Val::Lit(Literal::Int(i)) => Ok(*i),
-            other => Err(Error::TypeMismatch {
-                expected: "i32",
-                got: other.clone(),
-            }),
-        }
-    }
-
-    pub fn get_string(&self) -> Result<String, Error> {
-        match self {
-            Val::Lit(Literal::String(i)) => Ok(i.clone()),
-            other => Err(Error::TypeMismatch {
-                expected: "String",
-                got: other.clone(),
-            }),
-        }
-    }
-    pub fn get_unit(&self) -> Result<(), Error> {
-        match self {
-            Val::Lit(Literal::Unit) => Ok(()),
-            other => Err(Error::TypeMismatch {
-                expected: "()",
-                got: other.clone(),
-            }),
-        }
-    }
-    pub fn check_type(&self, ty: &Type) -> Result<(), Error> {
-        match ty {
-            Type::I32 => {
-                self.get_int()?;
-            }
-            Type::Bool => {
-                self.get_bool()?;
-            }
-            Type::String => {
-                self.get_string()?;
-            }
-            Type::Unit => {
-                self.get_unit()?;
-            }
-        }
-        Ok(())
-    }
-}
