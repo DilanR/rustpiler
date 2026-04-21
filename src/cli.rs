@@ -174,9 +174,12 @@ fn emit_ast(path: &Path, ast: &Prog) -> anyhow::Result<()> {
 
 fn run_type_check(ast: &Prog) -> anyhow::Result<()> {
     let mut type_checker = TypeChecker::new();
-    let result = match type_checker.check_prog(ast) {
+    let result = match type_checker
+        .check_prog(ast)
+        .map_err(|err| err.to_diagnostics())
+    {
         Ok(result) => result,
-        Err(err) => return Err(anyhow::anyhow!("Type check failed: {err}")),
+        Err(err) => return Err(anyhow::anyhow!("Type check failed: {err:?}")),
     };
     println!("Type check success: {:?}", result);
     Ok(())
