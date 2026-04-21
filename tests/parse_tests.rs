@@ -387,8 +387,8 @@ mod parse_block {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        assert_eq!(bl.statements.len(), 3);
-        assert!(bl.semi);
+        assert_eq!(bl.node.statements.len(), 3);
+        assert!(bl.node.semi);
     }
 
     #[test]
@@ -403,8 +403,8 @@ mod parse_block {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        assert_eq!(bl.statements.len(), 3);
-        assert!(!bl.semi);
+        assert_eq!(bl.node.statements.len(), 3);
+        assert!(!bl.node.semi);
     }
 
     #[test]
@@ -420,8 +420,8 @@ mod parse_block {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        assert_eq!(bl.statements.len(), 4);
-        assert!(!bl.semi);
+        assert_eq!(bl.node.statements.len(), 4);
+        assert!(!bl.node.semi);
     }
 
     #[test]
@@ -437,8 +437,8 @@ mod parse_block {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        assert_eq!(bl.statements.len(), 4);
-        assert!(!bl.semi);
+        assert_eq!(bl.node.statements.len(), 4);
+        assert!(!bl.node.semi);
     }
 
     #[test]
@@ -446,8 +446,8 @@ mod parse_block {
         let ts: proc_macro2::TokenStream = "{ let b : bool = false; b = true }".parse().unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        assert_eq!(bl.statements.len(), 2);
-        assert!(!bl.semi);
+        assert_eq!(bl.node.statements.len(), 2);
+        assert!(!bl.node.semi);
     }
 
     #[test]
@@ -789,10 +789,10 @@ mod parse_statement {
         let stmt: Statement = parse("while a {}");
         let expected = Spanned::dummy(StatementKind::While(
             Spanned::dummy(ExprKind::Ident("a".to_string())),
-            Block {
+            Spanned::dummy(BlockKind {
                 statements: vec![],
                 semi: false,
-            },
+            }),
         ));
         assert_eq!(stmt, expected);
     }
@@ -931,7 +931,7 @@ mod span_tests {
 
         if let ExprKind::Block(block) = &expr.node {
             let _ = expr.span;
-            assert!(block.statements.len() > 0);
+            assert!(block.node.statements.len() > 0);
         } else {
             panic!("expected block");
         }
