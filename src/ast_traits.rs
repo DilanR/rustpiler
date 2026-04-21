@@ -190,19 +190,6 @@ impl fmt::Display for Block {
     }
 }
 
-#[test]
-#[ignore = "ignoring self made test /dilred"]
-fn test_simple_block() {
-    let block = Block {
-        statements: vec![Spanned::dummy(StatementKind::Expr(expr(ExprKind::Ident(
-            "test".to_string(),
-        ))))],
-        semi: true,
-    };
-    let should_be = "{\n\ttest\n};";
-    assert_eq!(block.to_string(), should_be);
-}
-
 impl fmt::Display for Mutable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.0 {
@@ -279,31 +266,6 @@ impl fmt::Display for FnDeclarationKind {
             self.body
         )
     }
-}
-
-#[test]
-#[ignore = "ignoring self made test /dilred"]
-fn fn_declaration_test() {
-    let params = Parameters(vec![Parameter {
-        mutable: Mutable(true),
-        id: "testparam".to_string(),
-        ty: Type::I32,
-    }]);
-
-    let func = FnDeclarationKind {
-        id: "test_fn".to_string(),
-        parameters: params,
-        ty: Some(Type::I32),
-        body: Block {
-            statements: vec![Spanned::dummy(StatementKind::Expr(expr(ExprKind::Ident(
-                "testparam".to_string(),
-            ))))],
-            semi: false,
-        },
-    };
-
-    let should_be = "fn test_fn(mut testparam: i32) -> i32 {\n\ttestparam\n}".to_string();
-    assert_eq!(func.to_string(), should_be);
 }
 
 impl fmt::Display for Prog {
