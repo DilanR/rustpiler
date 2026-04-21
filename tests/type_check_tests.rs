@@ -381,3 +381,277 @@ mod peer_review_lab6 {
         assert_type(&prog, Type::I32);
     }
 }
+
+#[cfg(test)]
+mod type_failures_deep {
+    use super::*;
+
+    // -------------------------
+    // 1. RETURN TYPE FAILURES
+    // -------------------------
+
+    #[test]
+    fn fail_missing_return_expr() {
+        let p: Prog = parse(
+            r#"
+            fn main() -> i32 {
+                let x = 5;
+            }
+        "#,
+        );
+        assert_type_fail(&p);
+    }
+
+    #[test]
+    fn fail_trailing_semicolon_kills_return() {
+        let p: Prog = parse(
+            r#"
+            fn main() -> i32 {
+                5;
+            }
+        "#,
+        );
+        assert_type_fail(&p);
+    }
+
+    #[test]
+    fn fail_unit_expected_but_expr_present() {
+        let p: Prog = parse(
+            r#"
+            fn main() -> () {
+                5
+            }
+        "#,
+        );
+        assert_type_fail(&p);
+    }
+
+    // -------------------------
+    // 2. IF EXPRESSION FAILURES
+    // -------------------------
+
+    #[test]
+    fn fail_if_branch_mismatch() {
+        let b: Block = parse(
+            r#"
+            {
+                if true { 1 } else { false }
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+
+    #[test]
+    fn fail_if_missing_else_used_as_value() {
+        let p: Block = parse(
+            r#"
+         {
+            let x: i32 = if true { 5 };
+            x
+        }
+    "#,
+        );
+        assert_type_fail(&p);
+    }
+    #[test]
+    fn fail_if_semicolon_erases_value() {
+        let p: Prog = parse(
+            r#"
+            fn main() -> i32 {
+                if true { 5 } else { 6 };
+            }
+        "#,
+        );
+        assert_type_fail(&p);
+    }
+
+    // -------------------------
+    // 3. BLOCK PROPAGATION FAILURES
+    // -------------------------
+
+    #[test]
+    fn fail_inner_block_unit_propagation() {
+        let p: Prog = parse(
+            r#"
+            fn main() -> i32 {
+                {
+                    let x = 5;
+                    x;
+                }
+            }
+        "#,
+        );
+        assert_type_fail(&p);
+    }
+
+    #[test]
+    fn fail_nested_block_type_loss() {
+        let p: Prog = parse(
+            r#"
+        fn main() -> i32 {
+            let x = {
+                let y = 5;
+                y;
+            };
+            x
+        }
+    "#,
+        );
+        assert_type_fail(&p);
+    }
+    // -------------------------
+    // 4. FUNCTION CALL FAILURES
+    // -------------------------
+
+    #[test]
+    fn fail_wrong_arity() {
+        let p: Prog = parse(
+            r#"
+            fn f(x: i32) -> i32 { x }
+            fn main() -> i32 {
+                f()
+            }
+        "#,
+        );
+        assert_type_fail(&p);
+    }
+
+    #[test]
+    fn fail_wrong_argument_type_deep() {
+        let p: Prog = parse(
+            r#"
+            fn f(x: i32) -> i32 { x }
+            fn main() -> i32 {
+                f(1 + true)
+            }
+        "#,
+        );
+        assert_type_fail(&p);
+    }
+
+    // -------------------------
+    // 5. CONDITION FAILURES
+    // -------------------------
+
+    #[test]
+    fn fail_if_condition_not_bool_complex() {
+        let b: Block = parse(
+            r#"
+            {
+                if (1 + 2) { 3 } else { 4 }
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+
+    #[test]
+    fn fail_while_condition_not_bool() {
+        let b: Block = parse(
+            r#"
+            {
+                while 10 {
+                    1;
+                }
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+
+    // -------------------------
+    // 6. ASSIGNMENT FAILURES
+    // -------------------------
+
+    #[test]
+    fn fail_assign_type_mismatch() {
+        let b: Block = parse(
+            r#"
+            {
+                let mut x: i32;
+                x = true;
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+
+    #[test]
+    fn fail_assign_to_immutable() {
+        let b: Block = parse(
+            r#"
+            {
+                let x: i32 = 5;
+                x = 10;
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+
+    // -------------------------
+    // 7. SCOPE + RESOLUTION FAILURES
+    // -------------------------
+
+    #[test]
+    fn fail_shadowing_type_conflict() {
+        let b: Block = parse(
+            r#"
+            {
+                let x = 5;
+                let x = true;
+                x + 1
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+
+    #[test]
+    fn fail_use_after_inner_scope() {
+        let b: Block = parse(
+            r#"
+            {
+                {
+                    let x = 5;
+                }
+                x
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+
+    // -------------------------
+    // 8. OPERATOR EDGE CASES
+    // -------------------------
+
+    #[test]
+    fn fail_eq_wrong_types() {
+        let e: Expr = parse(r#""hello" == 5"#);
+        assert_type_fail(&e);
+    }
+
+    #[test]
+    fn fail_logical_ops_wrong_types() {
+        let e: Expr = parse(r#"true && 5"#);
+        assert_type_fail(&e);
+    }
+
+    // -------------------------
+    // 9. PRINT EDGE CASES
+    // -------------------------
+
+    #[test]
+    fn fail_print_multiple_wrong_args() {
+        let b: Block = parse(
+            r#"
+            {
+                println!("{}", 1, true);
+            }
+        "#,
+        );
+        assert_type_fail(&b);
+    }
+}
