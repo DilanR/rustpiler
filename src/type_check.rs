@@ -58,7 +58,11 @@ impl TypeChecker {
                         self.check_block(then)?,
                         self.check_block(else_block)?,
                     ),
-                    None => self.check_block(then),
+                    None => {
+                        // https://doc.rust-lang.org/reference/expressions/if-expr.html#r-expr.if.result
+                        self.check_block(then)?;
+                        Ok(Type::Unit)
+                    }
                 }
             }
             ExprKind::Block(block) => self.check_block(block),
