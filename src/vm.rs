@@ -42,7 +42,7 @@ impl Val {
             _ => panic!("internal error: expected (), got {:?}", self),
         }
     }
-    pub fn check_type(&self, ty: &Type) -> Result<(), Error> {
+    pub fn check_type(&self, ty: &Type) {
         match ty {
             Type::I32 => {
                 self.get_int();
@@ -57,28 +57,23 @@ impl Val {
                 self.get_unit();
             }
         }
-        Ok(())
     }
 }
 
 // Helper for Op
 impl BinOp {
     // Evaluate operator to literal
-    pub fn eval(&self, left: Val, right: Val) -> Result<Val, Error> {
+    pub fn eval(&self, left: Val, right: Val) -> Val {
         match self {
-            BinOp::Add => Ok(Val::Lit(Literal::Int(i32::from(left) + i32::from(right)))),
-            BinOp::Sub => Ok(Val::Lit(Literal::Int(i32::from(left) - i32::from(right)))),
-            BinOp::Mul => Ok(Val::Lit(Literal::Int(i32::from(left) * i32::from(right)))),
-            BinOp::Div => Ok(Val::Lit(Literal::Int(i32::from(left) / i32::from(right)))),
-            BinOp::And => Ok(Val::Lit(Literal::Bool(
-                bool::from(left) && bool::from(right),
-            ))),
-            BinOp::Or => Ok(Val::Lit(Literal::Bool(
-                bool::from(left) || bool::from(right),
-            ))),
-            BinOp::Eq => Ok(Val::Lit(Literal::Bool(left == right))),
-            BinOp::Lt => Ok(Val::Lit(Literal::Bool(i32::from(left) < i32::from(right)))),
-            BinOp::Gt => Ok(Val::Lit(Literal::Bool(i32::from(left) > i32::from(right)))),
+            BinOp::Add => Val::Lit(Literal::Int(i32::from(left) + i32::from(right))),
+            BinOp::Sub => Val::Lit(Literal::Int(i32::from(left) - i32::from(right))),
+            BinOp::Mul => Val::Lit(Literal::Int(i32::from(left) * i32::from(right))),
+            BinOp::Div => Val::Lit(Literal::Int(i32::from(left) / i32::from(right))),
+            BinOp::And => Val::Lit(Literal::Bool(bool::from(left) && bool::from(right))),
+            BinOp::Or => Val::Lit(Literal::Bool(bool::from(left) || bool::from(right))),
+            BinOp::Eq => Val::Lit(Literal::Bool(left == right)),
+            BinOp::Lt => Val::Lit(Literal::Bool(i32::from(left) < i32::from(right))),
+            BinOp::Gt => Val::Lit(Literal::Bool(i32::from(left) > i32::from(right))),
         }
     }
 }
@@ -193,7 +188,7 @@ impl VM {
             ExprKind::BinOp(op, left, right) => {
                 let left: Val = self.eval_expr(left)?;
                 let right: Val = self.eval_expr(right)?;
-                let result = BinOp::eval(op, left, right)?;
+                let result = BinOp::eval(op, left, right);
                 Ok(result)
             }
             ExprKind::Call(fn_name, arguments) => self.eval_expr_call(fn_name, arguments),
@@ -272,7 +267,7 @@ impl VM {
     pub fn eval_type(&mut self, expr: &Expr, ty: &Option<Type>) -> Result<Val, Error> {
         let val = self.eval_expr(expr)?;
         match ty {
-            Some(t) => val.check_type(t)?,
+            Some(t) => val.check_type(t),
             None => return Ok(val),
         }
         Ok(val)
