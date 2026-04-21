@@ -170,7 +170,7 @@ impl TypeChecker {
     pub fn check_block(&mut self, block: &Block) -> Result<Type, Error> {
         self.env.push_scope();
 
-        for stmt in &block.statements {
+        for stmt in &block.node.statements {
             match &stmt.node {
                 StatementKind::Fn(f) => {
                     let f = f.to_owned();
@@ -180,17 +180,17 @@ impl TypeChecker {
             };
         }
 
-        for stmt in block.statements.iter().rev().skip(1).rev() {
+        for stmt in block.node.statements.iter().rev().skip(1).rev() {
             self.check_stmt(stmt)?; // ignore the type; just check validity
         }
 
-        let last_ty = match block.statements.last() {
+        let last_ty = match block.node.statements.last() {
             Some(stmt) => self.check_stmt(stmt)?,
             None => Type::Unit,
         };
 
         self.env.pop_scope();
-        if block.semi {
+        if block.node.semi {
             Ok(Type::Unit)
         } else {
             Ok(last_ty)
