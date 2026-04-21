@@ -70,8 +70,10 @@ pub enum StatementKind {
     Fn(FnDeclaration),
 }
 
+pub type Block = Spanned<BlockKind>;
+
 #[derive(Debug, Clone, PartialEq)]
-pub struct Block {
+pub struct BlockKind {
     pub statements: Vec<Statement>,
     pub semi: bool,
 }
@@ -164,23 +166,21 @@ impl UnOp {
     }
 }
 
-impl Block {
-    pub fn new(statements: Vec<Statement>, semi: bool) -> Self {
-        Block { statements, semi }
-    }
-}
-
 impl From<Expr> for Statement {
     fn from(expr: Expr) -> Self {
-        Spanned::dummy(StatementKind::Expr(expr))
+        Spanned::new(StatementKind::Expr(expr.clone()), expr.span)
     }
 }
 
 impl From<Expr> for Block {
     fn from(expr: Expr) -> Self {
         Self {
-            statements: vec![Statement::from(expr)],
-            semi: false,
+            node: BlockKind {
+                statements: vec![Statement::from(expr.clone())],
+                semi: false,
+            },
+
+            span: expr.span,
         }
     }
 }
@@ -188,8 +188,11 @@ impl From<Expr> for Block {
 impl From<Statement> for Block {
     fn from(stmt: Statement) -> Self {
         Self {
-            statements: vec![stmt],
-            semi: false,
+            node: BlockKind {
+                statements: vec![stmt.clone()],
+                semi: false,
+            },
+            span: stmt.span,
         }
     }
 }
