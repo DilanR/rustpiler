@@ -175,6 +175,7 @@ impl fmt::Display for ExprKind {
 impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let statements = self
+            .node
             .statements
             .iter()
             .map(|f| f.to_string())
@@ -184,7 +185,7 @@ impl fmt::Display for Block {
             f,
             "{{\n\t{}{}\n}}",
             statements,
-            if self.semi { ";" } else { "" }
+            if self.node.semi { ";" } else { "" }
         )
     }
 }
