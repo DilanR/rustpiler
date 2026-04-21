@@ -4,12 +4,14 @@ use proc_macro2::Span;
 
 use crate::error::{AssignmentErrorKind, DuplicateKind, TypeError};
 
+#[derive(Debug)]
 pub struct Diagnostic {
     pub message: String,
     pub severity: Severity,
     pub range: ErrRange,
 }
 
+#[derive(Debug)]
 pub enum Severity {
     Error,
     Warning,
