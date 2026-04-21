@@ -168,7 +168,7 @@ impl CodegenVm {
     }
 
     fn push_unit_if_semi(&mut self, block: &Block) {
-        if block.semi {
+        if block.node.semi {
             self.push_unit();
         }
     }
@@ -264,12 +264,12 @@ impl CodegenVm {
     fn codegen_block(&mut self, block: &Block) -> Result<(), Error> {
         self.env.enter_scope();
 
-        let n = block.statements.len();
-        for (i, stmt) in block.statements.iter().enumerate() {
+        let n = block.node.statements.len();
+        for (i, stmt) in block.node.statements.iter().enumerate() {
             let is_last = i + 1 == n;
             match &stmt.node {
                 // Last expression and no trailing semicolon => expression block
-                StatementKind::Expr(expr) if is_last && !block.semi => {
+                StatementKind::Expr(expr) if is_last && !block.node.semi => {
                     self.codegen_expr(expr)?;
                 }
                 // Expression used as statement => discard result
@@ -287,7 +287,7 @@ impl CodegenVm {
 
     fn codegen_block_expr(&mut self, block: &Block) -> Result<(), Error> {
         self.codegen_block(block)?;
-        if block.semi || block.statements.is_empty() {
+        if block.node.semi || block.node.statements.is_empty() {
             self.push_unit();
         }
         Ok(())
