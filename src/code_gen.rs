@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     ast::*,
     common::Eval,
-    error::{Error, TypeError},
+    error::{CodeGenError, Error},
 };
 use mips::{
     asm::*,
@@ -70,28 +70,32 @@ impl CodeGenEnv {
             Literal::Bool(b) => self.add_instr(addi(t0, zero, *b as i16)),
             Literal::Int(i) => self.add_instr(addi(t0, zero, *i as i16)),
             Literal::Unit => self.add_instr(add(t0, zero, zero)),
-            _ => return Err(Error::UndefinedOperation()),
+            l => {
+                return Err(Error::CodeGen(CodeGenError::UnsupportedLiteral(
+                    l.to_owned(),
+                )));
+            }
         };
         self.push_to_stack(t0);
         Ok(())
     }
 
-    pub fn lookup_label(&self, id: &str) -> Result<String, Error> {
+    pub fn lookup_label(&self, id: &str) -> String {
         for scope in self.labels.iter().rev() {
             if let Some(label) = scope.get(id) {
-                return Ok(label.clone());
+                return label.clone();
             }
         }
-        Err(Error::UndefinedFunction(id.to_string()))
+        panic!("internal error: missing function label for {}", id)
     }
 
-    pub fn lookup_value_offset(&self, id: &str) -> Result<i16, Error> {
+    pub fn lookup_value_offset(&self, id: &str) -> i16 {
         for scope in self.values.iter().rev() {
             if let Some(offset) = scope.get(id) {
-                return Ok(*offset);
+                return *offset;
             }
         }
-        Err(Error::UndefinedValue(id.to_string()))
+        panic!("internal error: missing value offset for {}", id)
     }
 
     fn define_value_offset(&mut self, ident: &str) {
@@ -195,7 +199,7 @@ impl CodegenVm {
     pub fn codegen_expr(&mut self, expr: &Expr) -> Result<(), Error> {
         match &expr.node {
             ExprKind::Ident(id) => {
-                let offset = self.env.lookup_value_offset(id)?;
+                let offset = self.env.lookup_value_offset(id);
                 self.env.add_instr(lw(t0, offset, fp));
                 self.env.push_to_stack(t0);
                 Ok(())
@@ -305,7 +309,7 @@ impl CodegenVm {
                 self.env.define_value_offset(ident);
 
                 // get offset and store
-                let offset = self.env.lookup_value_offset(ident)?;
+                let offset = self.env.lookup_value_offset(ident);
                 self.env.add_instr(sw(t0, offset, fp));
             }
             StatementKind::Assign(ident, rhs) => {
@@ -315,16 +319,12 @@ impl CodegenVm {
 
                 // check if ident is valid and assign
                 if let ExprKind::Ident(var) = &ident.node {
-                    let offset = self.env.lookup_value_offset(var)?;
+                    let offset = self.env.lookup_value_offset(var);
                     self.env.add_instr(sw(t0, offset, fp));
                 } else {
                     // This Shouldn't need to be checked
                     // assuming reasonable pipeline.
-                    return Err(TypeError::Assignment {
-                        kind: crate::error::AssignmentErrorKind::NotIdent,
-                        range: ident.span.into(),
-                    }
-                    .into());
+                    panic!("Code Generation failed due to Typecheck error")
                 };
             }
             StatementKind::While(cond, block) => {
@@ -374,7 +374,7 @@ impl CodegenVm {
 
         // TODO: fetch correct label for shadowing
         // label for bal
-        let fn_label = self.env.lookup_label(&fn_decl.node.id)?;
+        let fn_label = self.env.lookup_label(&fn_decl.node.id);
         self.env.add_nop_with_label(&fn_label);
         let local_alloc_idx = self.emit_fn_prologue();
 
@@ -423,7 +423,7 @@ impl CodegenVm {
 
     fn codegen_call(&mut self, id: &str, args: &Arguments) -> Result<(), Error> {
         //check fn has label
-        let label = self.env.lookup_label(id)?;
+        let label = self.env.lookup_label(id);
         self.codegen_call_impl(&label, args)
     }
 
@@ -451,7 +451,7 @@ impl CodegenVm {
             self.env.define_function_label(&fn_decl.node.id);
         }
 
-        let main_label = self.env.lookup_label("main")?;
+        let main_label = self.env.lookup_label("main");
         self.env.add_instr(b_label(&main_label));
         for fn_decl in &prog.0 {
             self.codegen_fn_decl(fn_decl)?;
@@ -492,7 +492,7 @@ impl Eval<Vec<Instr>> for Prog {
             cg.env.define_function_label(&fn_decl.node.id);
         }
 
-        let main_label = cg.env.lookup_label("main")?;
+        let main_label = cg.env.lookup_label("main");
         cg.env.add_instr(b_label(&main_label));
         for fn_decl in &self.0 {
             cg.codegen_fn_decl(fn_decl)?;
