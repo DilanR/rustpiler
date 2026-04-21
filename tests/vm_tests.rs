@@ -13,7 +13,7 @@ mod tests {
     ",
         );
 
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
+        assert_eq!(v.unwrap().get_int(), 2);
     }
 
     #[test]
@@ -27,7 +27,7 @@ mod tests {
     ",
         );
 
-        assert!(!v.unwrap().get_bool().unwrap());
+        assert!(!v.unwrap().get_bool());
     }
 
     #[test]
@@ -41,7 +41,7 @@ mod tests {
     ",
         );
 
-        assert!(!v.unwrap().get_bool().unwrap());
+        assert!(!v.unwrap().get_bool());
     }
 
     #[test]
@@ -55,7 +55,7 @@ mod tests {
     ",
         );
 
-        assert!(v.unwrap().get_bool().unwrap());
+        assert!(v.unwrap().get_bool());
     }
 
     #[test]
@@ -69,7 +69,7 @@ mod tests {
         a + b
     }",
         );
-        assert_eq!(v.unwrap().get_int().unwrap(), 3);
+        assert_eq!(v.unwrap().get_int(), 3);
     }
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
         a + b
     }",
         );
-        assert_eq!(v.unwrap().get_int().unwrap(), 7);
+        assert_eq!(v.unwrap().get_int(), 7);
     }
 
     #[test]
@@ -104,7 +104,7 @@ mod tests {
     ",
         );
 
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
+        assert_eq!(v.unwrap().get_int(), 2);
     }
 
     #[test]
@@ -117,7 +117,7 @@ mod tests {
         a
     }",
         );
-        assert_eq!(v.unwrap().get_int().unwrap(), 3);
+        assert_eq!(v.unwrap().get_int(), 3);
     }
 
     #[test]
@@ -131,7 +131,7 @@ mod tests {
     }",
         );
 
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
+        assert_eq!(v.unwrap().get_int(), 2);
     }
 
     #[test]
@@ -150,7 +150,7 @@ mod tests {
     ",
         );
 
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
+        assert_eq!(v.unwrap().get_int(), 2);
     }
 
     #[test]
@@ -164,7 +164,7 @@ mod tests {
     ",
         );
 
-        assert_eq!(v.unwrap().get_int().unwrap(), 1);
+        assert_eq!(v.unwrap().get_int(), 1);
     }
 
     #[test]
@@ -203,7 +203,7 @@ mod tests {
         ",
         );
 
-        assert_eq!(v.unwrap().get_int().unwrap(), 4);
+        assert_eq!(v.unwrap().get_int(), 4);
     }
 
     #[test]
@@ -229,7 +229,7 @@ mod tests {
         );
 
         // a() should call the global b() which returns 42, not the local b() which returns 99
-        assert_eq!(v.unwrap().get_int().unwrap(), 42); // ERR left is 99
+        assert_eq!(v.unwrap().get_int(), 42); // ERR left is 99
     }
     #[test]
     fn test_nested_fn_shadowing() {
@@ -247,6 +247,6 @@ mod tests {
         }
         ",
         );
-        assert_eq!(v.unwrap().get_int().unwrap(), 100);
+        assert_eq!(v.unwrap().get_int(), 100);
     }
 }

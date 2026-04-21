@@ -4,7 +4,7 @@ use crate::ast::{
 };
 use crate::common::Eval;
 use crate::env;
-use crate::error::{Error, TypeError, VmError};
+use crate::error::{Error, VmError};
 use crate::intrinsics::vm_println;
 use std::collections::HashMap;
 
@@ -16,27 +16,27 @@ pub enum Val {
 }
 
 impl Val {
-    fn get_bool(&self) -> bool {
+    pub fn get_bool(&self) -> bool {
         match self {
             Val::Lit(Literal::Bool(b)) => *b,
             _ => panic!("internal error: expected bool, got {:?}", self),
         }
     }
 
-    fn get_int(&self) -> i32 {
+    pub fn get_int(&self) -> i32 {
         match self {
             Val::Lit(Literal::Int(i)) => *i,
             _ => panic!("internal error: expected i32, got {:?}", self),
         }
     }
 
-    fn get_string(&self) -> String {
+    pub fn get_string(&self) -> String {
         match self {
             Val::Lit(Literal::String(i)) => i.clone(),
             _ => panic!("internal error: expected string, got {:?}", self),
         }
     }
-    fn get_unit(&self) -> () {
+    pub fn get_unit(&self) {
         match self {
             Val::Lit(Literal::Unit) => (),
             _ => panic!("internal error: expected (), got {:?}", self),
@@ -68,7 +68,12 @@ impl BinOp {
             BinOp::Add => Val::Lit(Literal::Int(i32::from(left) + i32::from(right))),
             BinOp::Sub => Val::Lit(Literal::Int(i32::from(left) - i32::from(right))),
             BinOp::Mul => Val::Lit(Literal::Int(i32::from(left) * i32::from(right))),
-            BinOp::Div => Val::Lit(Literal::Int(i32::from(left) / i32::from(right))),
+            BinOp::Div => {
+                if i32::from(right.clone()) == 0 {
+                    panic!("division by zero");
+                }
+                Val::Lit(Literal::Int(i32::from(left) / i32::from(right)))
+            }
             BinOp::And => Val::Lit(Literal::Bool(bool::from(left) && bool::from(right))),
             BinOp::Or => Val::Lit(Literal::Bool(bool::from(left) || bool::from(right))),
             BinOp::Eq => Val::Lit(Literal::Bool(left == right)),
@@ -181,10 +186,10 @@ impl VM {
         match &expr.node {
             ExprKind::Lit(lit) => Ok(Val::from(lit.clone())),
             ExprKind::Par(expr) => self.eval_expr(expr),
-            ExprKind::Ident(id) => self
+            ExprKind::Ident(id) => Ok(self
                 .env
                 .lookup_value(id)
-                .ok_or(VmError::NoValFound(id.to_owned()).into()),
+                .unwrap_or_else(|| panic!("internal error: undefined variable {}", id))),
             ExprKind::BinOp(op, left, right) => {
                 let left: Val = self.eval_expr(left)?;
                 let right: Val = self.eval_expr(right)?;
@@ -217,9 +222,9 @@ impl VM {
         if ident == "println!" {
             let literals = collected_args
                 .into_iter()
-                .filter_map(|v| match v {
-                    Val::Lit(literal) => Some(literal),
-                    _ => None,
+                .map(|v| match v {
+                    Val::Lit(literal) => literal,
+                    _ => panic!("internal error: println! received non-literal {:?}", v),
                 })
                 .collect();
 
@@ -232,14 +237,15 @@ impl VM {
         let (def_depth, func) = self
             .env
             .lookup_fn(ident)
-            .ok_or(VmError::NoFunctionFound(ident.to_owned()))?; // check arity of both matches in future match types aswell
+            .unwrap_or_else(|| panic!("internal error: undefined function {}", ident)); // check arity of both matches in future match types aswell
         // check arity
         if func.node.parameters.0.len() != collected_args.len() {
-            return Err(Error::ParameterArityMismatch {
-                id: ident.to_owned(),
-                expected: func.node.parameters.0.len(),
-                got: collected_args.len(),
-            });
+            panic!(
+                "internal error: arity mismatch for {} (expected {}, got {})",
+                ident,
+                func.node.parameters.0.len(),
+                collected_args.len()
+            );
         }
 
         let mut new_val_scope: HashMap<String, Val> = HashMap::new();
@@ -311,12 +317,7 @@ impl VM {
         let rhs_val = self.eval_expr(rhs)?;
         if let ExprKind::Ident(id) = &lhs.node {
             if !self.env.assign_value(id, rhs_val) {
-                return Err(TypeError::Unknown {
-                    kind: crate::error::UnknownKind::Variable,
-                    name: id.to_owned(),
-                    range: lhs.span.into(),
-                }
-                .into());
+                panic!("internal error: assigning to undefined variable {}", id);
             } //TODO: err
             Ok(Val::from(()))
         } else {
@@ -393,7 +394,7 @@ impl VM {
         // check if valid program ie main exists
         let main_fn = match self.env.lookup_fn("main") {
             Some(main_fn) => main_fn.to_owned(),
-            None => return Err(VmError::NoMainFound.into()),
+            None => panic!("internal error: main function not found"),
         };
 
         //main should have no args and rtype, only parse body
