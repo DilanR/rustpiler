@@ -1,19 +1,15 @@
+use proc_macro2::Span;
+
 use crate::{
     ast::{
-        Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Prog, Statement,
-        StatementKind, Type,
+        Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Prog, Statement, StatementKind,
+        Type,
     },
     common::Eval,
     env::{AnnotatedType, TypeEnv},
     error::{Error, TypeError},
 };
 
-fn dummy_expr() -> Expr {
-    crate::ast::Spanned {
-        node: ExprKind::Lit(().into()),
-        span: proc_macro2::Span::call_site(),
-    }
-}
 pub struct TypeChecker {
     pub env: TypeEnv,
 }
@@ -29,10 +25,9 @@ impl TypeChecker {
         match &expr.node {
             ExprKind::Ident(l) => match self.env.lookup_binding(l) {
                 Some(binding) => Ok(binding.ty),
-                None => Err(TypeError::Unknown {
-                    kind: crate::error::UnknownKind::Variable,
+                None => Err(TypeError::UnknownVariable {
                     name: l.to_owned(),
-                    range: expr.span.into(),
+                    span: expr.span,
                 }
                 .into()),
             },
@@ -42,32 +37,34 @@ impl TypeChecker {
                 let rhs_type = self.check_expr(rhs)?;
                 match bin_op {
                     BinOp::Eq | BinOp::Lt | BinOp::Gt => {
-                        unify(expr, lhs_type, Type::I32)?;
-                        unify(expr, rhs_type, Type::I32)?;
+                        unify(expr.span, lhs_type, Type::I32)?;
+                        unify(expr.span, rhs_type, Type::I32)?;
                         Ok(Type::Bool)
                     }
                     _ => {
                         let expected = bin_op.expected_type();
-                        let got = unify(expr, lhs_type, rhs_type)?;
-                        unify(expr, got, expected)
+                        let got = unify(expr.span, lhs_type, rhs_type)?;
+                        unify(expr.span, got, expected)
                     }
                 }
             }
             ExprKind::Par(inner) => self.check_expr(inner),
             ExprKind::Call(id, arguments) => self.check_call(expr, id, arguments),
             ExprKind::IfThenElse(cond, then, opt) => {
-                unify(expr, self.check_expr(cond)?, Type::Bool)?;
+                unify(expr.span, self.check_expr(cond)?, Type::Bool)?;
                 match opt {
-                    Some(else_block) => {
-                        unify(expr, self.check_block(then)?, self.check_block(else_block)?)
-                    }
+                    Some(else_block) => unify(
+                        expr.span,
+                        self.check_block(then)?,
+                        self.check_block(else_block)?,
+                    ),
                     None => self.check_block(then),
                 }
             }
             ExprKind::Block(block) => self.check_block(block),
             ExprKind::UnOp(un_op, expr) => {
                 let expected = un_op.expected_type();
-                unify(expr, self.check_expr(expr)?, expected)
+                unify(expr.span, self.check_expr(expr)?, expected)
             }
         }
     }
@@ -77,7 +74,7 @@ impl TypeChecker {
             StatementKind::Let(mutable, id, ty, expr) => match (ty, expr) {
                 (None, None) => Err(TypeError::Uninitialized {
                     name: id.into(),
-                    range: stmt.span.into(),
+                    span: stmt.span,
                 }
                 .into()),
                 (None, Some(e)) => {
@@ -94,7 +91,7 @@ impl TypeChecker {
                     Ok(t.clone())
                 }
                 (Some(t), Some(e)) => {
-                    unify(e, self.check_expr(e)?, t.clone())?;
+                    unify(e.span, self.check_expr(e)?, t.clone())?;
                     self.env
                         .define_binding(id, AnnotatedType::new(t.clone(), mutable.0, true));
                     Ok(t.clone())
@@ -106,10 +103,9 @@ impl TypeChecker {
                     ExprKind::Ident(id) => match self.env.lookup_binding(id) {
                         Some(t) => (t, id),
                         None => {
-                            return Err(TypeError::Unknown {
-                                kind: crate::error::UnknownKind::Variable,
+                            return Err(TypeError::UnknownVariable {
                                 name: id.clone(),
-                                range: lhs.span.into(),
+                                span: lhs.span,
                             }
                             .into());
                         }
@@ -118,13 +114,13 @@ impl TypeChecker {
                     _ => {
                         return Err(TypeError::Assignment {
                             kind: crate::error::AssignmentErrorKind::NotIdent,
-                            range: lhs.span.into(),
+                            span: lhs.span,
                         }
                         .into());
                     }
                 };
 
-                let ty = unify(rhs, lhs_at.ty, self.check_expr(rhs)?)?;
+                let ty = unify(rhs.span, lhs_at.ty, self.check_expr(rhs)?)?;
 
                 let new_at = match (lhs_at.mutable, lhs_at.is_initialized) {
                     (true, _) => AnnotatedType::new(ty, true, true),
@@ -132,7 +128,7 @@ impl TypeChecker {
                     _ => {
                         return Err(TypeError::Assignment {
                             kind: crate::error::AssignmentErrorKind::NotMutable,
-                            range: lhs.span.into(),
+                            span: lhs.span,
                         }
                         .into());
                     }
@@ -143,7 +139,7 @@ impl TypeChecker {
                 Ok(Type::Unit)
             }
             StatementKind::While(cond, block) => {
-                unify(cond, self.check_expr(cond)?, Type::Bool)?;
+                unify(cond.span, self.check_expr(cond)?, Type::Bool)?;
                 Ok(self.check_block(block)?)
             }
             StatementKind::Expr(expr) => Ok(self.check_expr(expr)?),
@@ -202,52 +198,52 @@ impl TypeChecker {
         if id == "println!" {
             //first arg should be string
             match arguments.0.first() {
-                Some(str_arg) => unify(expr, self.check_expr(str_arg)?, Type::String)?,
+                Some(str_arg) => unify(expr.span, self.check_expr(str_arg)?, Type::String)?,
                 None => {
                     return Err(TypeError::TypeMismatch {
                         expected: Type::String,
                         got: Type::Unit,
-                        range: expr.span.into(),
+                        span: expr.span,
                     }
                     .into());
                 }
             };
             //rest should i32
             for arg in arguments.0.iter().skip(1) {
-                unify(arg, self.check_expr(arg)?, Type::I32)?;
+                unify(arg.span, self.check_expr(arg)?, Type::I32)?;
             }
 
             Ok(Type::Unit)
         } else {
             let Some(fn_decl) = self.env.lookup_function(id) else {
-                return Err(TypeError::Unknown {
-                    kind: crate::error::UnknownKind::Function,
+                return Err(TypeError::UnknownFunction {
                     name: id.to_owned(),
-                    range: expr.span.into(),
+                    span: expr.span,
                 }
                 .into());
             };
 
             //check arity
             if fn_decl.node.parameters.0.len() != arguments.0.len() {
-                return Err(Error::ParameterArityMismatch {
+                return Err(TypeError::ParameterArityMismatch {
                     id: fn_decl.node.id.clone(),
                     expected: fn_decl.node.parameters.0.len(),
                     got: arguments.0.len(),
-                });
+                    span: expr.span,
+                }
+                .into());
             };
 
             // check all parameters have a binding and match with arguments
             for (param, arg) in fn_decl.node.parameters.0.iter().zip(arguments.0.iter()) {
                 let Some(binding) = self.env.lookup_binding(&param.id) else {
-                    return Err(TypeError::Unknown {
-                        kind: crate::error::UnknownKind::Variable,
+                    return Err(TypeError::UnknownVariable {
                         name: param.id.to_owned(),
-                        range: expr.span.into(),
+                        span: expr.span,
                     }
                     .into());
                 };
-                unify(arg, binding.ty, self.check_expr(arg)?)?;
+                unify(arg.span, binding.ty, self.check_expr(arg)?)?;
             }
 
             Ok(fn_decl.node.ty.unwrap_or(Type::Unit))
@@ -273,7 +269,7 @@ impl TypeChecker {
 
         // compare body return type and fn return type
         // TODO change sig for unify
-        unify(&dummy_expr(), r_type, body_return_type)
+        unify(fn_decl.span, r_type, body_return_type)
     }
 
     pub fn check_prog(&mut self, prog: &Prog) -> Result<Type, Error> {
@@ -286,7 +282,7 @@ impl TypeChecker {
                 return Err(TypeError::Duplicate {
                     kind: crate::error::DuplicateKind::Function,
                     name: id,
-                    range: crate::error::ErrRange::dummy(),
+                    span: fn_decl.span,
                 }
                 .into());
             }
@@ -301,10 +297,9 @@ impl TypeChecker {
         let main = match self.env.lookup_function("main") {
             Some(f) => f,
             None => {
-                return Err(TypeError::Unknown {
-                    kind: crate::error::UnknownKind::Function,
+                return Err(TypeError::UnknownFunction {
                     name: "main".to_string(),
-                    range: crate::error::ErrRange::dummy(),
+                    span: proc_macro2::Span::call_site(),
                 }
                 .into());
             }
@@ -320,13 +315,13 @@ impl Default for TypeChecker {
     }
 }
 
-fn unify(expr: &Expr, got: Type, expected: Type) -> Result<Type, Error> {
+fn unify(span: Span, got: Type, expected: Type) -> Result<Type, Error> {
     match got == expected {
         true => Ok(expected),
         false => Err(TypeError::TypeMismatch {
             expected,
             got,
-            range: expr.span.into(),
+            span,
         }
         .into()),
     }
