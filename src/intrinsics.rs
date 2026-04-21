@@ -1,4 +1,5 @@
-use crate::ast::{Block, FnDeclarationKind, Mutable, Parameter, Parameters, Type};
+use crate::ast::{Block, BlockKind, FnDeclarationKind, Mutable, Parameter, Parameters, Type};
+use proc_macro2::Span;
 use regex::Regex;
 // Implementation of intrinsics for the vm
 use crate::ast::Literal;
@@ -21,8 +22,11 @@ pub fn vm_println() -> (FnDeclarationKind, Intrinsic) {
             ]),
             ty: None,
             body: Block {
-                statements: vec![],
-                semi: false,
+                node: BlockKind {
+                    statements: vec![],
+                    semi: false,
+                },
+                span: Span::call_site(),
             },
         },
         |lit_vec| {
