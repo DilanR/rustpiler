@@ -1,6 +1,6 @@
 use crate::ast::{
-    Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, FnDeclarationKind, Literal, Mutable,
-    Parameter, Parameters, Prog, Spanned, Statement, StatementKind, Type, UnOp,
+    Arguments, BinOp, Block, BlockKind, Expr, ExprKind, FnDeclaration, FnDeclarationKind, Literal,
+    Mutable, Parameter, Parameters, Prog, Spanned, Statement, StatementKind, Type, UnOp,
 };
 use syn::{
     Error, Ident, Result, Token,
@@ -189,7 +189,7 @@ fn parse_operand(input: ParseStream) -> Result<Expr> {
     } else if input.peek(Token![if]) {
         let _: Token![if] = input.parse()?;
         let condition: Expr = input.parse()?;
-        let then_block: Block = input.parse()?;
+        let then_block: Block = input.parse::<Block>()?;
 
         let opt_block = if input.peek(Token![else]) {
             let _: Token![else] = input.parse()?;
@@ -385,16 +385,14 @@ impl Parse for FnDeclaration {
 
         let body: Block = input.parse()?;
 
-        let end = input.span();
-
         Ok(Spanned::new(
             FnDeclarationKind {
                 id: identifier.to_string(),
                 parameters,
                 ty,
-                body,
+                body: body.clone(),
             },
-            start.join(end).unwrap_or(start),
+            start.join(body.span).unwrap_or(start),
         ))
     }
 }
@@ -497,6 +495,8 @@ use syn::punctuated::Punctuated;
 // Here we take advantage of the parser function `parse_terminated`
 impl Parse for Block {
     fn parse(input: ParseStream) -> Result<Block> {
+        let start = input.span();
+
         let content;
         syn::braced!(content in input);
 
@@ -530,7 +530,12 @@ impl Parse for Block {
             }
         }
 
-        Ok(Block { statements, semi })
+        let end = input.span();
+
+        Ok(Spanned::new(
+            BlockKind { statements, semi },
+            start.join(end).unwrap_or(start),
+        ))
     }
 }
 impl Parse for Prog {
