@@ -75,7 +75,11 @@ impl From<TypeError> for Diagnostic {
                 expected,
                 got,
                 span,
-            } => todo!(),
+            } => Diagnostic {
+                message: format!("{id} expected {expected} arguments, got {got}"),
+                severity: Severity::Error,
+                range: span.into(),
+            },
         }
     }
 }
