@@ -1,4 +1,5 @@
 /target
+compiler/target
 Cargo.lock
 *.asm
 *.ast

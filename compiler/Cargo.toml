@@ -1,0 +1,20 @@
+[package]
+name = "compiler"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+thiserror = "2.0.17"
+indented = "0.1.0"
+proc-macro2 = { version = "1.0.70", features = ["span-locations"] }
+quote = "1.0.33"
+regex = "1.10.2"
+derive_more = { version = "2.1.0", features = ["constructor"] }
+mips = { git = "https://vesuvio-git.neteq.ltu.se/pln/mips.git", features = [
+  "env_log",
+] }
+anyhow = "1.0.100"
+
+[dependencies.syn]
+version = "2.0.40"
+features = ["full", "extra-traits"]
