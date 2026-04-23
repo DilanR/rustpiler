@@ -1,11 +1,12 @@
 #![allow(clippy::all)]
 #![allow(double_negations)]
 #![allow(clippy::assign_op_pattern)]
-//use syn::parse::Parse;
-use rnr::ast::*;
-//use rnr::util::*;
-use rnr::test_util::*;
-//use rnr::parse::Parse;
+use compiler::ast::*;
+
+mod common;
+
+use common::test_util::*;
+
 #[cfg(test)]
 mod expr {
     #![allow(clippy::all)]

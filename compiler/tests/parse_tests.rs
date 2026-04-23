@@ -3,10 +3,12 @@
 #![allow(double_negations)]
 #![allow(clippy::assign_op_pattern)]
 
-use rnr::ast::*;
-use rnr::parse::*;
-use rnr::test_util::assert_parse_fail;
+use compiler::ast::*;
+use compiler::parse::*;
 use syn::Result;
+
+mod common;
+use common::test_util::*;
 
 #[cfg(test)]
 mod parse_lit {

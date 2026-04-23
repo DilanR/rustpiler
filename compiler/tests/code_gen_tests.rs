@@ -1,9 +1,9 @@
+use compiler::ast::*;
+use compiler::common::codegen_instrs;
 use mips::instr::Instr;
 use mips::instrs::Instrs;
 use mips::rf::Reg::t0;
 use mips::vm::Mips;
-use rnr::ast::*;
-use rnr::common::codegen_instrs;
 
 fn run_expr_i32(src: &str) -> i32 {
     let instrs = codegen_instrs::<Expr>(src).unwrap();

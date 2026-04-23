@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use rnr::ast::Literal;
-    use rnr::ast::{Block, Expr, Prog};
-    use rnr::common::parse_test;
-    use rnr::vm::Val;
+    use compiler::ast::Literal;
+    use compiler::ast::{Block, Expr, Prog};
+    use compiler::common::parse_test;
+    use compiler::vm::Val;
 
     #[test]
     fn test_expr() {

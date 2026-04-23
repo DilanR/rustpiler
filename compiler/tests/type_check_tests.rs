@@ -1,14 +1,18 @@
-use rnr::ast::*;
-use rnr::env::AnnotatedType;
-use rnr::parse::parse;
-use rnr::test_util::{assert_type, assert_type_fail};
-use rnr::type_check::*;
+use compiler::ast::*;
+use compiler::env::AnnotatedType;
+use compiler::parse::parse;
+use compiler::type_check::*;
+
+mod common;
+
+use common::test_util::*;
 
 #[cfg(test)]
 mod type_expr {
     #![allow(clippy::all)]
 
     use super::*;
+
     #[test]
     fn simple_ident() {
         let mut tc = TypeChecker::new();
@@ -255,7 +259,7 @@ mod type_statement {
 mod type_prog {
     #![allow(clippy::all)]
 
-    use rnr::{test_util::assert_value, vm::Val};
+    use compiler::vm::Val;
 
     use super::*;
     #[test]
