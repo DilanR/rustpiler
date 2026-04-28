@@ -12,3 +12,5 @@ pub mod code_gen;
 pub mod env;
 pub mod type_check;
 pub mod vm;
+
+pub mod test_util;
