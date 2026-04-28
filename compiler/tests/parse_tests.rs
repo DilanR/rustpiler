@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+//#![allow(clippy::all)]
 #![allow(unused_variables)]
 #![allow(double_negations)]
 #![allow(clippy::assign_op_pattern)]
@@ -7,8 +7,7 @@ use compiler::ast::*;
 use compiler::parse::*;
 use syn::Result;
 
-mod common;
-use common::test_util::*;
+use compiler::test_util::*;
 
 #[cfg(test)]
 mod parse_lit {
@@ -933,7 +932,7 @@ mod span_tests {
 
         if let ExprKind::Block(block) = &expr.node {
             let _ = expr.span;
-            assert!(block.node.statements.len() > 0);
+            assert!(block.node.statements.len() == 1);
         } else {
             panic!("expected block");
         }
