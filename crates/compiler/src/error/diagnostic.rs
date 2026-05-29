@@ -3,7 +3,24 @@ use std::fmt;
 use proc_macro2::Span;
 use serde::Serialize;
 
-use crate::error::{AssignmentErrorKind, DuplicateKind, TypeError};
+use crate::error::{AssignmentErrorKind, CodeGenError, DuplicateKind, TypeError, VmError};
+
+#[derive(Serialize)]
+pub struct Diagnostics(pub Vec<Diagnostic>);
+
+impl Diagnostics {
+    pub fn push(&mut self, diagnostic: Diagnostic) {
+        self.0.push(diagnostic);
+    }
+
+    pub fn extend(&mut self, other: Diagnostics) {
+        self.0.extend(other.0);
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Diagnostic {
@@ -17,6 +34,52 @@ pub enum Severity {
     Error,
     Warning,
     Info,
+}
+
+impl FromIterator<Diagnostic> for Diagnostics {
+    fn from_iter<T: IntoIterator<Item = Diagnostic>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
+impl From<syn::Error> for Diagnostics {
+    fn from(err: syn::Error) -> Self {
+        err.into_iter()
+            .map(Diagnostic::from)
+            .collect::<Diagnostics>()
+    }
+}
+
+impl From<syn::Error> for Diagnostic {
+    fn from(err: syn::Error) -> Self {
+        Diagnostic {
+            message: err.to_string(),
+            severity: Severity::Error,
+            range: Some(err.span().into()),
+        }
+    }
+}
+
+//TODO: Fix spans
+impl From<CodeGenError> for Diagnostic {
+    fn from(err: CodeGenError) -> Self {
+        Self {
+            message: err.to_string(),
+            severity: Severity::Error,
+            range: None,
+        }
+    }
+}
+
+//TODO: Fix spans
+impl From<VmError> for Diagnostic {
+    fn from(err: VmError) -> Self {
+        Self {
+            message: err.to_string(),
+            severity: Severity::Error,
+            range: None,
+        }
+    }
 }
 
 impl From<TypeError> for Diagnostic {

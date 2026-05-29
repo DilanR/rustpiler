@@ -23,18 +23,14 @@ pub enum Error {
     CodeGen(#[from] CodeGenError),
 }
 
-impl Error {
+impl From<Error> for Diagnostic {
     // TODO: vec![Diagnostic]
-    pub fn to_diagnostics(self) -> Diagnostic {
-        match self {
-            Error::Type(type_err) => type_err.into(),
-
-            // Optional: fallback for non-spanned errors
-            other => Diagnostic {
-                message: other.to_string(),
-                severity: Severity::Error,
-                range: None, // not great, but works
-            },
+    fn from(value: Error) -> Self {
+        match value {
+            Error::Vm(err) => err.into(),
+            Error::Type(err) => err.into(),
+            Error::Parse(err) => err.into(),
+            Error::CodeGen(err) => err.into(),
         }
     }
 }
