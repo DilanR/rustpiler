@@ -1,17 +1,18 @@
 use std::fmt;
 
 use proc_macro2::Span;
+use serde::Serialize;
 
 use crate::error::{AssignmentErrorKind, DuplicateKind, TypeError};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Diagnostic {
     pub message: String,
     pub severity: Severity,
-    pub range: ErrRange,
+    pub range: Option<ErrRange>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Severity {
     Error,
     Warning,
@@ -28,17 +29,17 @@ impl From<TypeError> for Diagnostic {
             } => Diagnostic {
                 message: format!("expected {}, got {}", expected, got),
                 severity: Severity::Error,
-                range: span.into(),
+                range: Some(span.into()),
             },
             TypeError::UnknownFunction { name, span } => Diagnostic {
                 message: format!("undefined function `{}`", name),
                 severity: Severity::Error,
-                range: span.into(),
+                range: Some(span.into()),
             },
             TypeError::UnknownVariable { name, span } => Diagnostic {
                 message: format!("undefined variable `{}`", name),
                 severity: Severity::Error,
-                range: span.into(),
+                range: Some(span.into()),
             },
             TypeError::Assignment { kind, span } => {
                 let msg = match kind {
@@ -50,7 +51,7 @@ impl From<TypeError> for Diagnostic {
                 Diagnostic {
                     message: msg.to_string(),
                     severity: Severity::Error,
-                    range: span.into(),
+                    range: Some(span.into()),
                 }
             }
             TypeError::Duplicate { kind, name, span } => {
@@ -61,13 +62,13 @@ impl From<TypeError> for Diagnostic {
                 Diagnostic {
                     message: format!("duplicate {} `{}`", kind_str, name),
                     severity: Severity::Error,
-                    range: span.into(),
+                    range: Some(span.into()),
                 }
             }
             TypeError::Uninitialized { name, span } => Diagnostic {
                 message: format!("use of uninitialized variable `{}`", name),
                 severity: Severity::Error,
-                range: span.into(),
+                range: Some(span.into()),
             },
 
             TypeError::ParameterArityMismatch {
@@ -78,31 +79,18 @@ impl From<TypeError> for Diagnostic {
             } => Diagnostic {
                 message: format!("{id} expected {expected} arguments, got {got}"),
                 severity: Severity::Error,
-                range: span.into(),
+                range: Some(span.into()),
             },
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ErrRange {
     pub start_line: usize,
     pub start_column: usize,
     pub end_line: usize,
     pub end_column: usize,
-}
-
-impl ErrRange {
-    pub fn dummy() -> Self {
-        let dummy_line_column = proc_macro2::Span::call_site().start();
-
-        Self {
-            start_line: dummy_line_column.line,
-            start_column: dummy_line_column.column,
-            end_line: dummy_line_column.line,
-            end_column: dummy_line_column.column,
-        }
-    }
 }
 
 impl From<Span> for ErrRange {

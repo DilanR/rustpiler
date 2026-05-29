@@ -15,6 +15,8 @@ mips = { git = "https://vesuvio-git.neteq.ltu.se/pln/mips.git", features = [
 ] }
 anyhow = "1.0.100"
 
+serde = { version = "1", features = ["derive"] }
+
 [dependencies.syn]
 version = "2.0.40"
 features = ["full", "extra-traits"]
