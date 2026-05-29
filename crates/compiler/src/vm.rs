@@ -14,7 +14,15 @@ pub enum Val {
     UnInit,
     Mut(Box<Val>),
 }
-
+impl std::fmt::Display for Val {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Val::Lit(literal) => write!(f, "{}", literal),
+            Val::UnInit => write!(f, "Uninitialized"),
+            Val::Mut(val) => write!(f, "mut {}", val),
+        }
+    }
+}
 impl Val {
     pub fn get_bool(&self) -> bool {
         match self {
