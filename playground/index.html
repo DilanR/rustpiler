@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script type="module">
+import init, { compile } from "./public/pkg/wasm.js";
+
+await init();
+
+console.log(compile(`
+fn main() -> i32 {
+  30 + 12 
+}
+`));
+</script>
+</body>
+</html>
