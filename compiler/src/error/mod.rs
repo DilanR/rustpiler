@@ -27,16 +27,17 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn to_diagnostics(self) -> Vec<Diagnostic> {
+    // TODO: vec![Diagnostic]
+    pub fn to_diagnostics(self) -> Diagnostic {
         match self {
-            Error::Type(type_err) => vec![type_err.into()],
+            Error::Type(type_err) => type_err.into(),
 
             // Optional: fallback for non-spanned errors
-            other => vec![Diagnostic {
+            other => Diagnostic {
                 message: other.to_string(),
                 severity: Severity::Error,
                 range: ErrRange::dummy(), // not great, but works
-            }],
+            },
         }
     }
 }

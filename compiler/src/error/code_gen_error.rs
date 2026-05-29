@@ -6,4 +6,7 @@ use crate::ast::Literal;
 pub enum CodeGenError {
     #[error("Unsupported Literal {0}")]
     UnsupportedLiteral(Literal),
+
+    #[error("Internal service error: Mips")]
+    Mips,
 }
