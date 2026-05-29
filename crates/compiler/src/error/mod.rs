@@ -21,9 +21,6 @@ pub enum Error {
 
     #[error(transparent)]
     CodeGen(#[from] CodeGenError),
-
-    #[error("{0}")]
-    Message(String),
 }
 
 impl Error {
@@ -36,7 +33,7 @@ impl Error {
             other => Diagnostic {
                 message: other.to_string(),
                 severity: Severity::Error,
-                range: ErrRange::dummy(), // not great, but works
+                range: None, // not great, but works
             },
         }
     }
