@@ -1,54 +1,54 @@
+use compiler::error::{Diagnostic, Error};
 use compiler::pipeline;
 use compiler::vm::Val;
 use serde::Serialize;
+use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct CompileResult {
-    diagnostic: Option<compiler::error::Diagnostic>,
-    result: String,
+    diagnostics: Vec<Diagnostic>,
+    output: Option<String>,
 }
 
 impl CompileResult {
-    pub fn to_json(&self) -> String {
-        serde_json::to_string(self).unwrap_or_else(|e| format!("Error serializing: {}", e))
+    fn success(output: Val) -> Self {
+        Self {
+            diagnostics: Vec::new(),
+            output: Some(output.to_string()),
+        }
+    }
+
+    fn failure(err: Error) -> Self {
+        Self {
+            diagnostics: vec![err.into()],
+            output: None,
+        }
     }
 }
 
-#[wasm_bindgen]
-pub fn compile(source: &str) -> String {
+fn compile_impl(source: &str) -> CompileResult {
     let prog = match pipeline::frontend(source) {
-        Ok(prog) => prog,
-        Err(e) => {
-            return CompileResult {
-                diagnostic: Some(e.into()),
-                result: "Compilation Error".to_string(),
-            }
-            .to_json();
-        }
+        Ok(p) => p,
+        Err(e) => return CompileResult::failure(e),
     };
 
-    let result: Val = match pipeline::interpret(&prog) {
-        Ok(prog) => prog,
-        Err(e) => {
-            return CompileResult {
-                diagnostic: Some(e.into()),
-                result: "Interpret Error".to_string(),
-            }
-            .to_json();
-        }
+    let result = match pipeline::interpret(&prog) {
+        Ok(val) => val,
+        Err(e) => return CompileResult::failure(e),
     };
 
-    CompileResult {
-        diagnostic: None,
-        result: result.to_string(),
-    }
-    .to_json()
+    CompileResult::success(result)
+}
+
+#[wasm_bindgen]
+pub fn compile(source: &str) -> JsValue {
+    serde_wasm_bindgen::to_value(&compile_impl(source)).expect("CompileResult should serialize")
 }
 
 #[test]
 fn wasm_compile_success() {
-    let result = compile(
+    let result = compile_impl(
         r#"
         fn main() -> i32 {
             1 + 2
@@ -56,5 +56,6 @@ fn wasm_compile_success() {
         "#,
     );
 
-    assert!(result.contains("3"));
+    assert!(result.diagnostics.is_empty());
+    assert_eq!(result.output.as_deref(), Some("3"));
 }
