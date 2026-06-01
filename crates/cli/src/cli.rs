@@ -60,7 +60,7 @@ impl Cli {
             let result =
                 interpret(&prog).map_err(|err| anyhow::anyhow!("Interpreter failed:\n{err}"))?;
 
-            print_interpret_result(&result);
+            print_interpret_result(&result.0);
         }
 
         if self.codegen || self.asm.is_some() {

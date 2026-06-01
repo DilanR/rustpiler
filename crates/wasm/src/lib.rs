@@ -8,21 +8,24 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Debug, Serialize)]
 struct CompileResult {
     diagnostics: Vec<Diagnostic>,
-    output: Option<String>,
+    result: Option<String>,
+    stdout: Option<String>,
 }
 
 impl CompileResult {
-    fn success(output: Val) -> Self {
+    fn success(result: (Val, String)) -> Self {
         Self {
             diagnostics: Vec::new(),
-            output: Some(output.to_string()),
+            result: Some(result.0.to_string()),
+            stdout: Some(result.1),
         }
     }
 
     fn failure(err: Error) -> Self {
         Self {
             diagnostics: vec![err.into()],
-            output: None,
+            result: None,
+            stdout: None,
         }
     }
 }
@@ -51,11 +54,14 @@ fn wasm_compile_success() {
     let result = compile_impl(
         r#"
         fn main() -> i32 {
+            println!("test");
+            println!("stdout");
             1 + 2
         }
         "#,
     );
 
     assert!(result.diagnostics.is_empty());
-    assert_eq!(result.output.as_deref(), Some("3"));
+    assert_eq!(result.result.as_deref(), Some("3"));
+    assert_eq!(result.stdout.as_deref(), Some("test\nstdout\n"));
 }

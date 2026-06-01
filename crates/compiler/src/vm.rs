@@ -180,6 +180,7 @@ impl From<Literal> for bool {
 // A VM will execute a single program. it needs to keep check of scope.
 pub struct VM {
     env: env::Env,
+    stdout: String,
 }
 
 impl VM {
@@ -187,7 +188,12 @@ impl VM {
     pub fn new() -> Self {
         VM {
             env: env::Env::default(),
+            stdout: String::new(),
         }
+    }
+
+    pub fn stdout(self) -> String {
+        self.stdout
     }
 
     pub fn eval_expr(&mut self, expr: &Expr) -> Result<Val, Error> {
@@ -237,7 +243,7 @@ impl VM {
                 .collect();
 
             let (_, intrinsic) = vm_println();
-            let res = intrinsic(literals);
+            let res = intrinsic(literals, &mut self.stdout);
 
             // TODO: proper eval of println!
             return Ok(Val::Lit(res));
@@ -405,7 +411,6 @@ impl VM {
             None => panic!("internal error: main function not found"),
         };
 
-        //main should have no args and rtype, only parse body
         self.eval_block(&main_fn.1.node.body)
     }
 

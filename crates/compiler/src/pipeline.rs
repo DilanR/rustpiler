@@ -19,9 +19,10 @@ pub fn frontend(raw: &str) -> Result<Prog, Error> {
     }
 }
 
-pub fn interpret(prog: &Prog) -> Result<Val, Error> {
+pub fn interpret(prog: &Prog) -> Result<(Val, String), Error> {
     let mut vm = VM::new();
-    vm.eval_prog(prog)
+    let result = vm.eval_prog(prog)?;
+    Ok((result, vm.stdout()))
 }
 
 pub fn code_gen(ast: &Prog) -> Result<(u32, Vec<String>), Error> {
