@@ -53,7 +53,7 @@ pub fn vm_println() -> (FnDeclarationKind, Intrinsic) {
                         output.push_str(text);
                     }
 
-                    output.push_str("\n");
+                    output.push('\n');
                     stdout.push_str(&output);
 
                     println!();
