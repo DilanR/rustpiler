@@ -272,9 +272,7 @@ fn parse_ident_or_call(input: ParseStream) -> Result<Expr> {
         Err(e) => return Err(e),
     };
 
-    let end = input.span();
-
-    Ok(expr(start, end, kind))
+    Ok(expr(start, start, kind))
 }
 
 use quote::quote;
