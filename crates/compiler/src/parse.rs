@@ -530,12 +530,12 @@ impl Parse for Block {
             }
         }
 
-        let end = input.span();
+        let span = match (statements.first(), statements.last()) {
+            (Some(first), Some(last)) => first.span.join(last.span).unwrap_or(first.span),
+            _ => start,
+        };
 
-        Ok(Spanned::new(
-            BlockKind { statements, semi },
-            start.join(end).unwrap_or(start),
-        ))
+        Ok(Spanned::new(BlockKind { statements, semi }, span))
     }
 }
 impl Parse for Prog {
