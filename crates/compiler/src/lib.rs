@@ -5,7 +5,6 @@ pub mod intrinsics;
 
 // AST related
 pub mod ast;
-pub mod ast_traits;
 pub mod parse;
 
 pub mod code_gen;

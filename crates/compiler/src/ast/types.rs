@@ -1,4 +1,5 @@
 use proc_macro2::Span;
+use serde::Serialize;
 
 #[derive(Debug, Clone)]
 pub struct Spanned<T> {
@@ -25,7 +26,7 @@ impl<T: PartialEq> PartialEq for Spanned<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Type {
     I32,
     Bool,
@@ -33,14 +34,18 @@ pub enum Type {
     Unit,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize)]
 pub struct Mutable(pub bool);
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Parameters(pub Vec<Parameter>);
+pub type Parameters = Spanned<ParametersKind>;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Parameter {
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ParametersKind(pub Vec<Parameter>);
+
+pub type Parameter = Spanned<ParameterKind>;
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ParameterKind {
     pub mutable: Mutable,
     pub id: String,
     pub ty: Type,
@@ -48,7 +53,7 @@ pub struct Parameter {
 
 pub type FnDeclaration = Spanned<FnDeclarationKind>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct FnDeclarationKind {
     pub id: String,
     pub parameters: Parameters,
@@ -56,12 +61,12 @@ pub struct FnDeclarationKind {
     pub body: Block,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Prog(pub Vec<FnDeclaration>);
 
 pub type Statement = Spanned<StatementKind>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum StatementKind {
     Let(Mutable, String, Option<Type>, Option<Expr>),
     Assign(Expr, Expr),
@@ -70,20 +75,40 @@ pub enum StatementKind {
     Fn(FnDeclaration),
 }
 
+impl StatementKind {
+    pub fn span(&self) -> Span {
+        match self {
+            StatementKind::Let(_, _, _, Some(expr)) => expr.span,
+
+            StatementKind::Let(_, _, _, None) => Span::call_site(),
+
+            StatementKind::Assign(lhs, rhs) => lhs.span.join(rhs.span).unwrap_or(lhs.span),
+
+            StatementKind::While(cond, block) => cond.span.join(block.span).unwrap_or(cond.span),
+
+            StatementKind::Expr(expr) => expr.span,
+
+            StatementKind::Fn(func) => func.span,
+        }
+    }
+}
+
 pub type Block = Spanned<BlockKind>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct BlockKind {
     pub statements: Vec<Statement>,
     pub semi: bool,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Arguments(pub Vec<Expr>);
+pub type Arguments = Spanned<ArgumentsKind>;
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ArgumentsKind(pub Vec<Expr>);
 
 pub type Expr = Spanned<ExprKind>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum ExprKind {
     Ident(String),
     Lit(Literal),
@@ -95,7 +120,7 @@ pub enum ExprKind {
     UnOp(UnOp, Box<Expr>),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Literal {
     Bool(bool),
     Int(i32),
@@ -103,7 +128,7 @@ pub enum Literal {
     Unit,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize)]
 pub enum BinOp {
     Add,
     Sub,
@@ -116,7 +141,7 @@ pub enum BinOp {
     Gt,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize)]
 pub enum UnOp {
     Neg,
     Bang,

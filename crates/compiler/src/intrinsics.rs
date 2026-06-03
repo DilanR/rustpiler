@@ -1,4 +1,7 @@
-use crate::ast::{Block, BlockKind, FnDeclarationKind, Mutable, Parameter, Parameters, Type};
+use crate::ast::{
+    Block, BlockKind, FnDeclarationKind, Mutable, Parameter, ParameterKind, Parameters,
+    ParametersKind, Spanned, Type,
+};
 use proc_macro2::Span;
 use regex::Regex;
 // Implementation of intrinsics for the vm
@@ -8,18 +11,21 @@ pub fn vm_println() -> (FnDeclarationKind, Intrinsic) {
     (
         FnDeclarationKind {
             id: "println!".to_string(),
-            parameters: Parameters(vec![
-                Parameter {
-                    mutable: Mutable(false),
-                    id: "str".to_string(),
-                    ty: Type::String,
-                },
-                Parameter {
-                    mutable: Mutable(false),
-                    id: "i".to_string(),
-                    ty: Type::I32,
-                },
-            ]),
+            parameters: Parameters::new(
+                ParametersKind(vec![
+                    Spanned::dummy(ParameterKind {
+                        mutable: Mutable(false),
+                        id: "str".to_string(),
+                        ty: Type::String,
+                    }),
+                    Spanned::dummy(ParameterKind {
+                        mutable: Mutable(false),
+                        id: "i".to_string(),
+                        ty: Type::I32,
+                    }),
+                ]),
+                Span::call_site(),
+            ),
             ty: None,
             body: Block {
                 node: BlockKind {

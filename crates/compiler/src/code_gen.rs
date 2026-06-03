@@ -363,13 +363,13 @@ impl CodegenVm {
         self.env.fn_local_count = 0;
 
         // params need to be above fp
-        for (i, param) in fn_decl.node.parameters.0.iter().enumerate() {
+        for (i, param) in fn_decl.node.parameters.node.0.iter().enumerate() {
             let offset = 8 + (i as i16) * 4;
             self.env
                 .values
                 .last_mut()
                 .unwrap()
-                .insert(param.id.clone(), offset);
+                .insert(param.node.id.clone(), offset);
         }
 
         // TODO: fetch correct label for shadowing
@@ -428,10 +428,10 @@ impl CodegenVm {
     }
 
     fn codegen_call_impl(&mut self, label: &str, args: &Arguments) -> Result<(), Error> {
-        let argc = args.0.len() as i16;
+        let argc = args.node.0.len() as i16;
 
         self.env.push_to_stack(ra);
-        for arg in args.0.iter() {
+        for arg in args.node.0.iter() {
             self.codegen_expr(arg)?;
         }
 

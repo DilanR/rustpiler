@@ -151,11 +151,12 @@ impl TypeChecker {
                 let _params_type: Vec<AnnotatedType> = fn_decl
                     .node
                     .parameters
+                    .node
                     .0
                     .iter()
                     .map(|p| {
-                        let a_ty = AnnotatedType::new(p.ty.clone(), p.mutable.0, true);
-                        self.env.define_binding(&p.id, a_ty.clone());
+                        let a_ty = AnnotatedType::new(p.node.ty.clone(), p.node.mutable.0, true);
+                        self.env.define_binding(&p.node.id, a_ty.clone());
                         a_ty
                     })
                     .collect();
@@ -201,7 +202,7 @@ impl TypeChecker {
         // lookup fn with id
         if id == "println!" {
             //first arg should be string
-            match arguments.0.first() {
+            match arguments.node.0.first() {
                 Some(str_arg) => unify(expr.span, self.check_expr(str_arg)?, Type::String)?,
                 None => {
                     return Err(TypeError::TypeMismatch {
@@ -213,7 +214,7 @@ impl TypeChecker {
                 }
             };
             //rest should i32
-            for arg in arguments.0.iter().skip(1) {
+            for arg in arguments.node.0.iter().skip(1) {
                 unify(arg.span, self.check_expr(arg)?, Type::I32)?;
             }
 
@@ -228,21 +229,28 @@ impl TypeChecker {
             };
 
             //check arity
-            if fn_decl.node.parameters.0.len() != arguments.0.len() {
+            if fn_decl.node.parameters.node.0.len() != arguments.node.0.len() {
                 return Err(TypeError::ParameterArityMismatch {
                     id: fn_decl.node.id.clone(),
-                    expected: fn_decl.node.parameters.0.len(),
-                    got: arguments.0.len(),
+                    expected: fn_decl.node.parameters.node.0.len(),
+                    got: arguments.node.0.len(),
                     span: expr.span,
                 }
                 .into());
             };
 
             // check all parameters have a binding and match with arguments
-            for (param, arg) in fn_decl.node.parameters.0.iter().zip(arguments.0.iter()) {
-                let Some(binding) = self.env.lookup_binding(&param.id) else {
+            for (param, arg) in fn_decl
+                .node
+                .parameters
+                .node
+                .0
+                .iter()
+                .zip(arguments.node.0.iter())
+            {
+                let Some(binding) = self.env.lookup_binding(&param.node.id) else {
                     return Err(TypeError::UnknownVariable {
-                        name: param.id.to_owned(),
+                        name: param.node.id.to_owned(),
                         span: expr.span,
                     }
                     .into());
@@ -257,12 +265,12 @@ impl TypeChecker {
     fn check_fn(&mut self, fn_decl: &FnDeclaration) -> Result<Type, Error> {
         let r_type = fn_decl.node.ty.clone().unwrap_or(Type::Unit);
         // Add param to bindings
-        for param in fn_decl.node.parameters.0.iter() {
+        for param in fn_decl.node.parameters.node.0.iter() {
             self.env.define_binding(
-                &param.id,
+                &param.node.id,
                 AnnotatedType {
-                    ty: param.ty.clone(),
-                    mutable: param.mutable.0,
+                    ty: param.node.ty.clone(),
+                    mutable: param.node.mutable.0,
                     is_initialized: true,
                 },
             );

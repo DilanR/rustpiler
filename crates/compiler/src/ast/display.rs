@@ -1,84 +1,11 @@
-// Extra traits implemented for AST
+use core::fmt;
 
-use crate::ast::*;
-use std::fmt::{self};
+use proc_macro2::Span;
 
-pub fn expr(kind: ExprKind) -> Expr {
-    Spanned {
-        node: kind,
-        span: proc_macro2::Span::call_site(), // dummy span for tests
-    }
-}
-
-impl From<ExprKind> for Expr {
-    fn from(kind: ExprKind) -> Self {
-        Spanned {
-            node: kind,
-            span: proc_macro2::Span::call_site(),
-        }
-    }
-}
-
-// Utility functions/traits for your AST here.
-impl ExprKind {
-    pub fn bin_op(o: BinOp, left: Expr, right: Expr) -> Self {
-        ExprKind::BinOp(o, Box::new(left), Box::new(right))
-    }
-
-    pub fn un_op(o: UnOp, right: Expr) -> Self {
-        ExprKind::UnOp(o, Box::new(right))
-    }
-}
-
-/// Anything that can be converted into a Literal (like i32, bool, etc) can also be converted into an Expr.
-impl<T: Into<Literal>> From<T> for ExprKind {
-    fn from(x: T) -> Self {
-        ExprKind::Lit(x.into())
-    }
-}
-
-impl<T: Into<Literal>> From<T> for Expr {
-    fn from(x: T) -> Self {
-        expr(ExprKind::Lit(x.into()))
-    }
-}
-
-/// Anything that can be converted to a Literal can also be converted to a Type.
-impl<T: Into<Literal>> From<T> for Type {
-    fn from(x: T) -> Self {
-        let lit: Literal = x.into();
-        match lit {
-            Literal::Unit => Type::Unit,
-            Literal::Bool(_) => Type::Bool,
-            Literal::Int(_) => Type::I32,
-            Literal::String(_) => Type::String,
-        }
-    }
-}
-
-impl From<i32> for Literal {
-    fn from(i: i32) -> Self {
-        Literal::Int(i)
-    }
-}
-
-impl From<bool> for Literal {
-    fn from(b: bool) -> Self {
-        Literal::Bool(b)
-    }
-}
-
-impl From<()> for Literal {
-    fn from(_: ()) -> Self {
-        Literal::Unit
-    }
-}
-
-impl From<String> for Literal {
-    fn from(s: String) -> Self {
-        Literal::String(s)
-    }
-}
+use crate::ast::{
+    Arguments, BinOp, Block, ExprKind, FnDeclarationKind, Literal, Mutable, Parameter,
+    ParameterKind, Parameters, ParametersKind, Prog, Spanned, StatementKind, Type, UnOp,
+};
 
 impl<T: fmt::Display> fmt::Display for Spanned<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -202,13 +129,14 @@ impl fmt::Display for Mutable {
 
 impl fmt::Display for Parameter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}: {}", self.mutable, self.id, self.ty)
+        write!(f, "{}{}: {}", self.node.mutable, self.node.id, self.node.ty)
     }
 }
 
 impl fmt::Display for Parameters {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let parameters = self
+            .node
             .0
             .iter()
             .map(|p| p.to_string())
@@ -221,18 +149,18 @@ impl fmt::Display for Parameters {
 #[test]
 fn display_parameters() {
     let params: Vec<Parameter> = vec![
-        Parameter {
+        Spanned::dummy(ParameterKind {
             mutable: Mutable(true),
             id: "testparam".to_string(),
             ty: Type::I32,
-        },
-        Parameter {
+        }),
+        Spanned::dummy(ParameterKind {
             mutable: Mutable(false),
             id: "testparam2".to_string(),
             ty: Type::String,
-        },
+        }),
     ];
-    let parameters = Parameters(params);
+    let parameters = Parameters::new(ParametersKind(params), Span::call_site());
     println!("ast:\n{}", parameters);
     assert_eq!(
         parameters.to_string(),
@@ -243,6 +171,7 @@ fn display_parameters() {
 impl fmt::Display for Arguments {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args = self
+            .node
             .0
             .iter()
             .map(|p| p.to_string())
@@ -325,7 +254,7 @@ fn display_if_then_else() {
     "
     .parse()
     .unwrap();
-    let e: Expr = syn::parse2(ts).unwrap();
+    let e: crate::ast::Expr = syn::parse2(ts).unwrap();
     println!("ast:\n{:?}", e);
 
     println!("pretty:\n{}", e);
@@ -340,7 +269,7 @@ fn display_while() {
     "
     .parse()
     .unwrap();
-    let e: Statement = syn::parse2(ts).unwrap();
+    let e: crate::ast::Statement = syn::parse2(ts).unwrap();
     println!("ast:\n{:?}", e);
 
     println!("pretty:\n{}", e);
@@ -353,8 +282,8 @@ fn display_expr() {
     println!("{}", ExprKind::Lit(Literal::Bool(false)));
     let e = ExprKind::BinOp(
         BinOp::Add,
-        Box::new(expr(ExprKind::Ident("a".to_string()))),
-        Box::new(expr(ExprKind::Lit(Literal::Int(7)))),
+        Box::new(crate::ast::helpers::expr(ExprKind::Ident("a".to_string()))),
+        Box::new(crate::ast::helpers::expr(ExprKind::Lit(Literal::Int(7)))),
     );
     println!("{}", e);
     assert_eq!(format!("{}", e), "a + 7");
@@ -368,7 +297,7 @@ fn display_expr() {
 #[test]
 fn parse_display_expr() {
     let ts: proc_macro2::TokenStream = "a + 7".parse().unwrap();
-    let e: Expr = syn::parse2(ts).unwrap();
+    let e: crate::ast::Expr = syn::parse2(ts).unwrap();
     println!("e {}", &e.node);
 }
 
@@ -380,6 +309,6 @@ fn parse_display_expr() {
 #[test]
 fn parse_display_if() {
     let ts: proc_macro2::TokenStream = "if a > 5 {5}".parse().unwrap();
-    let e: Expr = syn::parse2(ts).unwrap();
+    let e: crate::ast::Expr = syn::parse2(ts).unwrap();
     println!("e {}", e);
 }

@@ -956,7 +956,7 @@ mod span_tests {
         if let ExprKind::Call(_, args) = &expr.node {
             let _ = expr.span;
 
-            for arg in &args.0 {
+            for arg in &args.node.0 {
                 let _ = arg.span;
             }
         } else {

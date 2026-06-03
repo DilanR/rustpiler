@@ -1,3 +1,4 @@
+use compiler::ast::AstNode;
 use compiler::error::{Diagnostic, Error};
 use compiler::pipeline;
 use compiler::vm::Val;
@@ -10,14 +11,16 @@ struct CompileResult {
     diagnostics: Vec<Diagnostic>,
     result: Option<String>,
     stdout: Option<String>,
+    ast: Option<AstNode>,
 }
 
 impl CompileResult {
-    fn success(result: (Val, String)) -> Self {
+    fn success(result: (Val, String), ast: AstNode) -> Self {
         Self {
             diagnostics: Vec::new(),
             result: Some(result.0.to_string()),
             stdout: Some(result.1),
+            ast: Some(ast),
         }
     }
 
@@ -26,6 +29,7 @@ impl CompileResult {
             diagnostics: vec![err.into()],
             result: None,
             stdout: None,
+            ast: None,
         }
     }
 }
@@ -41,7 +45,7 @@ fn compile_impl(source: &str) -> CompileResult {
         Err(e) => return CompileResult::failure(e),
     };
 
-    CompileResult::success(result)
+    CompileResult::success(result, AstNode::from(&prog))
 }
 
 #[wasm_bindgen]

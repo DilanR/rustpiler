@@ -229,6 +229,7 @@ impl VM {
     pub fn eval_expr_call(&mut self, ident: &String, args: &Arguments) -> Result<Val, Error> {
         //first consider functions always in scope, in our case println!
         let collected_args = args
+            .node
             .0
             .iter()
             .map(|arg| self.eval_expr(arg))
@@ -253,25 +254,25 @@ impl VM {
             .lookup_fn(ident)
             .unwrap_or_else(|| panic!("internal error: undefined function {}", ident)); // check arity of both matches in future match types aswell
         // check arity
-        if func.node.parameters.0.len() != collected_args.len() {
+        if func.node.parameters.node.0.len() != collected_args.len() {
             panic!(
                 "internal error: arity mismatch for {} (expected {}, got {})",
                 ident,
-                func.node.parameters.0.len(),
+                func.node.parameters.node.0.len(),
                 collected_args.len()
             );
         }
 
         let mut new_val_scope: HashMap<String, Val> = HashMap::new();
         //match callers args to parameters
-        for (param, arg) in func.node.parameters.0.iter().zip(collected_args) {
-            let val = if param.mutable.0 {
+        for (param, arg) in func.node.parameters.node.0.iter().zip(collected_args) {
+            let val = if param.node.mutable.0 {
                 Val::Mut(Box::new(arg))
             } else {
                 arg
             };
 
-            new_val_scope.insert(param.id.clone(), val);
+            new_val_scope.insert(param.node.id.clone(), val);
         }
 
         // New vm for local scope

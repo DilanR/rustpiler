@@ -1,6 +1,7 @@
 use crate::ast::{
-    Arguments, BinOp, Block, BlockKind, Expr, ExprKind, FnDeclaration, FnDeclarationKind, Literal,
-    Mutable, Parameter, Parameters, Prog, Spanned, Statement, StatementKind, Type, UnOp,
+    Arguments, ArgumentsKind, BinOp, Block, BlockKind, Expr, ExprKind, FnDeclaration,
+    FnDeclarationKind, Literal, Mutable, Parameter, ParameterKind, Parameters, ParametersKind,
+    Prog, Spanned, Statement, StatementKind, Type, UnOp,
 };
 use syn::{
     Error, Ident, Result, Token,
@@ -121,10 +122,11 @@ impl Parse for UnOp {
 use proc_macro2::Span;
 
 fn expr(start: Span, end: Span, kind: ExprKind) -> Expr {
-    Spanned {
-        node: kind,
-        span: start.join(end).unwrap_or(start),
-    }
+    let span = match &kind {
+        ExprKind::Lit(_) => start,
+        _ => start.join(end).unwrap_or(start),
+    };
+    Spanned { node: kind, span }
 }
 impl Parse for Expr {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -253,26 +255,31 @@ fn parse_binary_op_expr(input: ParseStream, left: Expr, min_prio: u8) -> Result<
 fn parse_ident_or_call(input: ParseStream) -> Result<Expr> {
     let start = input.span();
 
+    let end;
     let kind = match input.parse::<Ident>() {
         Ok(identifier) => {
             // macro call
             if input.peek(Token![!]) {
                 let _: Token![!] = input.parse()?;
                 let args: Arguments = input.parse()?;
+
+                end = args.span;
                 ExprKind::Call(format!("{}!", identifier), args)
             }
             // function call
             else if input.peek(syn::token::Paren) {
                 let args: Arguments = input.parse()?;
+                end = args.span;
                 ExprKind::Call(identifier.to_string(), args)
             } else {
+                end = start;
                 ExprKind::Ident(identifier.to_string())
             }
         }
         Err(e) => return Err(e),
     };
 
-    Ok(expr(start, start, kind))
+    Ok(expr(start, end, kind))
 }
 
 use quote::quote;
@@ -308,11 +315,19 @@ impl Parse for Type {
 impl Parse for Arguments {
     fn parse(input: ParseStream) -> Result<Arguments> {
         let content;
-        syn::parenthesized!(content in input);
+        let para = syn::parenthesized!(content in input);
 
-        let args: Punctuated<Expr, Token![,]> = content.parse_terminated(Expr::parse, Token![,])?;
+        let args = content.parse_terminated(Expr::parse, Token![,])?;
 
-        Ok(Arguments(args.into_iter().collect()))
+        let span = match para.span.open().join(para.span.close()) {
+            Some(s) => s,
+            None => Span::call_site(),
+        };
+
+        Ok(Spanned::new(
+            ArgumentsKind(args.into_iter().collect()),
+            span,
+        ))
     }
 }
 
@@ -330,11 +345,14 @@ impl Parse for Parameter {
 
         let ty: Type = input.parse()?;
 
-        Ok(Parameter {
-            mutable: Mutable(mutable_param),
-            id: identifier.to_string(),
-            ty,
-        })
+        Ok(Spanned::new(
+            ParameterKind {
+                mutable: Mutable(mutable_param),
+                id: identifier.to_string(),
+                ty,
+            },
+            identifier.span(),
+        ))
     }
 }
 
@@ -342,9 +360,15 @@ impl Parse for Parameter {
 impl Parse for Parameters {
     fn parse(input: ParseStream) -> Result<Parameters> {
         let content;
-        let _ = syn::parenthesized!(content in input);
+        let para = syn::parenthesized!(content in input);
+
+        let span = match para.span.open().join(para.span.close()) {
+            Some(s) => s,
+            None => Span::call_site(),
+        };
+
         if content.is_empty() {
-            Ok(Parameters(vec![]))
+            Ok(Parameters::new(ParametersKind(vec![]), span))
         } else {
             let mut params: Vec<Parameter> = vec![];
             // Not empty should have atleast 1 param
@@ -361,7 +385,7 @@ impl Parse for Parameters {
             if content.peek(syn::token::Comma) {
                 let _: syn::token::Comma = content.parse()?;
             }
-            Ok(Parameters(params))
+            Ok(Parameters::new(ParametersKind(params), span))
         }
     }
 }
@@ -407,7 +431,6 @@ impl Parse for FnDeclaration {
 impl Parse for Statement {
     fn parse(input: ParseStream) -> Result<Statement> {
         let start = input.span();
-
         let kind = {
             if input.peek(syn::token::Let) {
                 let _: syn::token::Let = input.parse()?;
@@ -434,36 +457,30 @@ impl Parse for Statement {
                     None
                 };
 
-                Ok(StatementKind::Let(
-                    mutable,
-                    identifier.to_string(),
-                    ty,
-                    expr,
-                ))
+                StatementKind::Let(mutable, identifier.to_string(), ty, expr)
             } else if input.peek(syn::token::While) {
                 let _: syn::token::While = input.parse()?;
                 let condition: Expr = input.parse()?;
                 let block: Block = input.parse()?;
-                Ok(StatementKind::While(condition, block))
+                StatementKind::While(condition, block)
             } else if input.peek(token::Fn) {
-                Ok(StatementKind::Fn(input.parse::<FnDeclaration>()?))
+                StatementKind::Fn(input.parse::<FnDeclaration>()?)
             } else {
                 // Expecting Assign or Expr
                 let lhs: Expr = input.parse()?;
                 if input.peek(syn::token::Eq) {
                     let _: syn::token::Eq = input.parse()?;
-                    Ok(StatementKind::Assign(lhs, input.parse::<Expr>()?))
+                    StatementKind::Assign(lhs, input.parse::<Expr>()?)
                 } else {
-                    Ok(StatementKind::Expr(lhs))
+                    StatementKind::Expr(lhs)
                 }
             }
         };
+        let end = kind.span();
 
-        let end = input.span();
-        match kind {
-            Ok(k) => Ok(Spanned::new(k, start.join(end).unwrap_or(start))),
-            Err(e) => Err(e),
-        }
+        let span = start.join(end).unwrap_or(start);
+
+        Ok(Spanned::new(kind, span))
     }
 }
 
@@ -496,7 +513,7 @@ impl Parse for Block {
         let start = input.span();
 
         let content;
-        syn::braced!(content in input);
+        let braced = syn::braced!(content in input);
 
         let mut statements = Vec::new();
         let mut semi = false;
@@ -528,14 +545,21 @@ impl Parse for Block {
             }
         }
 
+        /*
         let span = match (statements.first(), statements.last()) {
             (Some(first), Some(last)) => first.span.join(last.span).unwrap_or(first.span),
             _ => start,
+        };
+        */
+        let span = match braced.span.open().join(braced.span.close()) {
+            Some(s) => s,
+            None => Span::call_site(),
         };
 
         Ok(Spanned::new(BlockKind { statements, semi }, span))
     }
 }
+
 impl Parse for Prog {
     fn parse(input: ParseStream) -> Result<Prog> {
         let mut fns: Vec<FnDeclaration> = vec![];
