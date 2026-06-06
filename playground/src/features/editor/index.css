@@ -1,0 +1,43 @@
+.editor-tabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+}
+
+.editor-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  background: #1e1e1e;
+  color: #aaa;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.editor-tab:hover {
+  background: #2d2d2d;
+}
+
+.editor-tab--active {
+  background: #252526;
+  color: white;
+}
+
+.editor-container {
+  border: 1px solid #333;
+  border-top: none;
+}
+
+.output-editor {
+  height: 300px;
+}
+
+.ast-highlight {
+  background-color: rgba(
+    255,
+    255,
+    0,
+    0.35
+  );
+  border-radius: 2px;
+}
