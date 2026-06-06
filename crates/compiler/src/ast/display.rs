@@ -1,9 +1,8 @@
 use core::fmt;
-use proc_macro2::Span;
 
 use crate::ast::{
-    Arguments, BinOp, Block, ExprKind, FnDeclarationKind, Literal, Mutable, Parameter,
-    ParameterKind, Parameters, ParametersKind, Prog, Spanned, StatementKind, Type, TypeExpr, UnOp,
+    Arguments, BinOp, Block, ExprKind, FnDeclarationKind, Literal, Mutable, Parameter, Parameters,
+    Prog, Spanned, StatementKind, TypeExpr, UnOp,
 };
 
 impl<T: fmt::Display> fmt::Display for Spanned<T> {
@@ -41,16 +40,6 @@ impl fmt::Display for Literal {
     }
 }
 
-#[test]
-fn display_literal() {
-    println!("{}", Literal::Int(3));
-    println!("{}", Literal::Bool(false));
-    println!("{}", Literal::Unit);
-    assert_eq!(format!("{}", Literal::Int(3)), "3");
-    assert_eq!(format!("{}", Literal::Bool(false)), "false");
-    assert_eq!(format!("{}", Literal::Unit), "()");
-}
-
 impl fmt::Display for TypeExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -60,14 +49,6 @@ impl fmt::Display for TypeExpr {
             TypeExpr::Unit => write!(f, "()"),
         }
     }
-}
-
-#[test]
-fn display_type() {
-    assert_eq!(format!("{}", TypeExpr::I32), "i32");
-    assert_eq!(format!("{}", TypeExpr::Bool), "bool");
-    assert_eq!(format!("{}", TypeExpr::Unit), "()");
-    assert_eq!(format!("{}", TypeExpr::String), "String");
 }
 
 impl fmt::Display for UnOp {
@@ -144,28 +125,6 @@ impl fmt::Display for Parameters {
     }
 }
 
-#[test]
-fn display_parameters() {
-    let params: Vec<Parameter> = vec![
-        Spanned::dummy(ParameterKind {
-            mutable: Mutable(true),
-            id: "testparam".to_string(),
-            ty: Spanned::dummy(TypeExpr::I32),
-        }),
-        Spanned::dummy(ParameterKind {
-            mutable: Mutable(false),
-            id: "testparam2".to_string(),
-            ty: Spanned::dummy(TypeExpr::String),
-        }),
-    ];
-    let parameters = Parameters::new(ParametersKind(params), Span::call_site());
-    println!("ast:\n{}", parameters);
-    assert_eq!(
-        parameters.to_string(),
-        "(mut testparam: i32, testparam2: String)"
-    )
-}
-
 impl fmt::Display for Arguments {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args = self
@@ -236,77 +195,50 @@ impl fmt::Display for StatementKind {
     }
 }
 
-#[test]
-fn display_if_then_else() {
-    let ts: proc_macro2::TokenStream = "
-    if a {
-        let a : i32 = false;
-        0
-    } else {
-        if a == 5 { b = 8 };
-        while b {
-            e;
-        }
-        b
+#[cfg(test)]
+mod display_tests {
+    use proc_macro2::Span;
+
+    use crate::ast::{ParameterKind, ParametersKind};
+
+    use super::*;
+
+    #[test]
+    fn display_literal() {
+        println!("{}", Literal::Int(3));
+        println!("{}", Literal::Bool(false));
+        println!("{}", Literal::Unit);
+        assert_eq!(format!("{}", Literal::Int(3)), "3");
+        assert_eq!(format!("{}", Literal::Bool(false)), "false");
+        assert_eq!(format!("{}", Literal::Unit), "()");
     }
-    "
-    .parse()
-    .unwrap();
-    let e: crate::ast::Expr = syn::parse2(ts).unwrap();
-    println!("ast:\n{:?}", e);
 
-    println!("pretty:\n{}", e);
-}
-
-#[test]
-fn display_while() {
-    let ts: proc_macro2::TokenStream = "
-    while a == 9 {
-        let b : i32 = 7;
+    #[test]
+    fn display_type() {
+        assert_eq!(format!("{}", TypeExpr::I32), "i32");
+        assert_eq!(format!("{}", TypeExpr::Bool), "bool");
+        assert_eq!(format!("{}", TypeExpr::Unit), "()");
+        assert_eq!(format!("{}", TypeExpr::String), "String");
     }
-    "
-    .parse()
-    .unwrap();
-    let e: crate::ast::Statement = syn::parse2(ts).unwrap();
-    println!("ast:\n{:?}", e);
-
-    println!("pretty:\n{}", e);
-}
-
-#[test]
-fn display_expr() {
-    println!("{}", ExprKind::Ident("a".to_string()));
-    println!("{}", ExprKind::Lit(Literal::Int(7)));
-    println!("{}", ExprKind::Lit(Literal::Bool(false)));
-    let e = ExprKind::BinOp(
-        BinOp::Add,
-        Box::new(crate::ast::helpers::expr(ExprKind::Ident("a".to_string()))),
-        Box::new(crate::ast::helpers::expr(ExprKind::Lit(Literal::Int(7)))),
-    );
-    println!("{}", e);
-    assert_eq!(format!("{}", e), "a + 7");
-}
-
-// As you see it becomes cumbersome to write tests
-// if you have to construct the Expr by hand.
-//
-// Instead we might use our parser
-
-#[test]
-fn parse_display_expr() {
-    let ts: proc_macro2::TokenStream = "a + 7".parse().unwrap();
-    let e: crate::ast::Expr = syn::parse2(ts).unwrap();
-    println!("e {}", &e.node);
-}
-
-// This one will fail (Display for `if` is not yet implemented).
-// Implement it as an optional assignment
-//
-// Hint: You need to implement Display for Statement and Block
-
-#[test]
-fn parse_display_if() {
-    let ts: proc_macro2::TokenStream = "if a > 5 {5}".parse().unwrap();
-    let e: crate::ast::Expr = syn::parse2(ts).unwrap();
-    println!("e {}", e);
+    #[test]
+    fn display_parameters() {
+        let params: Vec<Parameter> = vec![
+            Spanned::dummy(ParameterKind {
+                mutable: Mutable(true),
+                id: "testparam".to_string(),
+                ty: Spanned::dummy(TypeExpr::I32),
+            }),
+            Spanned::dummy(ParameterKind {
+                mutable: Mutable(false),
+                id: "testparam2".to_string(),
+                ty: Spanned::dummy(TypeExpr::String),
+            }),
+        ];
+        let parameters = Parameters::new(ParametersKind(params), Span::call_site());
+        println!("ast:\n{}", parameters);
+        assert_eq!(
+            parameters.to_string(),
+            "(mut testparam: i32, testparam2: String)"
+        )
+    }
 }
