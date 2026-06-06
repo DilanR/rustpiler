@@ -1,7 +1,7 @@
 use crate::ast::{
     Arguments, ArgumentsKind, BinOp, Block, BlockKind, Expr, ExprKind, FnDeclaration,
     FnDeclarationKind, Literal, Mutable, Parameter, ParameterKind, Parameters, ParametersKind,
-    Prog, Spanned, Statement, StatementKind, Type, UnOp,
+    Prog, Spanned, Statement, StatementKind, Type, TypeExpr, UnOp,
 };
 use syn::{
     Error, Ident, Result, Token,
@@ -168,36 +168,62 @@ fn peek_prio(input: ParseStream) -> u8 {
 /// For example: `3 + ...`, `x + ...`, `!true && ...`, `(1+2) + ...`, or `[1,2,3][0] + ...`.
 /// No point in spanning operands for now
 fn parse_operand(input: ParseStream) -> Result<Expr> {
-    let start = input.span();
-
-    let result = if input.peek(syn::token::Paren) {
+    if input.peek(syn::token::Paren) {
         let content;
-        let _ = syn::parenthesized!(content in input);
+        let paren = syn::parenthesized!(content in input);
 
-        if content.is_empty() {
+        let span = paren
+            .span
+            .open()
+            .join(paren.span.close())
+            .unwrap_or(paren.span.open());
+
+        let kind = if content.is_empty() {
             ExprKind::Lit(Literal::Unit)
         } else {
-            let e: Expr = content.parse()?;
-            ExprKind::Par(Box::new(e))
-        }
-    } else if input.peek(Token![-]) || input.peek(Token![!]) {
-        let op: UnOp = input.parse()?;
-        let e = parse_operand(input)?;
-        ExprKind::UnOp(op, Box::new(e))
-    } else if input.peek(Ident) {
-        return parse_ident_or_call(input);
-    } else if input.peek(token::Brace) {
-        ExprKind::Block(input.parse::<Block>()?)
-    } else if input.peek(Token![if]) {
-        let _: Token![if] = input.parse()?;
-        let condition: Expr = input.parse()?;
-        let then_block: Block = input.parse::<Block>()?;
+            let expr: Expr = content.parse()?;
+            ExprKind::Par(Box::new(expr))
+        };
 
-        let opt_block = if input.peek(Token![else]) {
+        return Ok(Expr::new(kind, span));
+    }
+
+    if input.peek(Token![-]) || input.peek(Token![!]) {
+        let op_span = input.span();
+
+        let op: UnOp = input.parse()?;
+        let expr: Expr = parse_operand(input)?;
+
+        let span = op_span.join(expr.span).unwrap_or(op_span);
+
+        return Ok(Expr::new(ExprKind::UnOp(op, Box::new(expr)), span));
+    }
+
+    if input.peek(Ident) {
+        return parse_ident_or_call(input);
+    }
+
+    if input.peek(token::Brace) {
+        let block = input.parse::<Block>()?;
+        let span = block.span;
+
+        return Ok(Expr::new(ExprKind::Block(block), span));
+    }
+
+    if input.peek(Token![if]) {
+        let if_span = input.span();
+
+        let _: Token![if] = input.parse()?;
+
+        let condition: Expr = input.parse()?;
+        let then_block: Block = input.parse()?;
+
+        let else_block = if input.peek(Token![else]) {
             let _: Token![else] = input.parse()?;
+
             if input.peek(Token![if]) {
-                let else_block: Expr = input.parse()?;
-                Some(else_block.into())
+                let expr: Expr = input.parse()?;
+                Some(expr.into())
             } else {
                 Some(input.parse::<Block>()?)
             }
@@ -205,16 +231,27 @@ fn parse_operand(input: ParseStream) -> Result<Expr> {
             None
         };
 
-        ExprKind::IfThenElse(Box::new(condition), then_block, opt_block)
-    } else if input.peek(syn::Lit) {
-        let lit: Literal = input.parse()?;
-        ExprKind::Lit(lit)
-    } else {
-        return Err(input.error("Invalid operand!"));
-    };
+        let end_span = else_block
+            .as_ref()
+            .map(|b| b.span)
+            .unwrap_or(then_block.span);
 
-    let end = input.span();
-    Ok(expr(start, end, result))
+        let span = if_span.join(end_span).unwrap_or(if_span);
+
+        return Ok(Expr::new(
+            ExprKind::IfThenElse(Box::new(condition), then_block, else_block),
+            span,
+        ));
+    }
+
+    if input.peek(syn::Lit) {
+        let span = input.span();
+        let lit: Literal = input.parse()?;
+
+        return Ok(Expr::new(ExprKind::Lit(lit), span));
+    }
+
+    Err(input.error("Invalid operand!"))
 }
 
 /// Parse an expression consisting of binary operators, such as `1 + 2`, `1 + 2 + 3`,
@@ -299,16 +336,18 @@ impl Parse for Type {
         let token_stream = quote!(#syn_type);
         let token_string = token_stream.to_string();
 
-        let ty = match token_string.as_str() {
-            "i32" => Type::I32,
-            "bool" => Type::Bool,
-            "String" => Type::String,
-            "()" => Type::Unit,
-            other => {
-                return Err(Error::new(start, format!("Unsupported Type {}", other)));
-            }
-        };
-        Ok(ty)
+        Ok(Spanned::new(
+            match token_string.as_str() {
+                "i32" => TypeExpr::I32,
+                "bool" => TypeExpr::Bool,
+                "String" => TypeExpr::String,
+                "()" => TypeExpr::Unit,
+                other => {
+                    return Err(Error::new(start, format!("Unsupported Type {}", other)));
+                }
+            },
+            start,
+        ))
     }
 }
 
@@ -349,9 +388,9 @@ impl Parse for Parameter {
             ParameterKind {
                 mutable: Mutable(mutable_param),
                 id: identifier.to_string(),
-                ty,
+                ty: ty.clone(),
             },
-            identifier.span(),
+            identifier.span().join(ty.span).unwrap_or(identifier.span()),
         ))
     }
 }

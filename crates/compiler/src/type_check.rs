@@ -37,9 +37,9 @@ impl TypeChecker {
                 let rhs_type = self.check_expr(rhs)?;
                 match bin_op {
                     BinOp::Eq | BinOp::Lt | BinOp::Gt => {
-                        unify(expr.span, lhs_type, Type::I32)?;
-                        unify(expr.span, rhs_type, Type::I32)?;
-                        Ok(Type::Bool)
+                        unify(expr.span, lhs_type, Type::i32())?;
+                        unify(expr.span, rhs_type, Type::i32())?;
+                        Ok(Type::bool())
                     }
                     _ => {
                         let expected = bin_op.expected_type();
@@ -51,7 +51,7 @@ impl TypeChecker {
             ExprKind::Par(inner) => self.check_expr(inner),
             ExprKind::Call(id, arguments) => self.check_call(expr, id, arguments),
             ExprKind::IfThenElse(cond, then, opt) => {
-                unify(expr.span, self.check_expr(cond)?, Type::Bool)?;
+                unify(expr.span, self.check_expr(cond)?, Type::bool())?;
                 match opt {
                     Some(else_block) => unify(
                         expr.span,
@@ -61,7 +61,7 @@ impl TypeChecker {
                     None => {
                         // https://doc.rust-lang.org/reference/expressions/if-expr.html#r-expr.if.result
                         self.check_block(then)?;
-                        Ok(Type::Unit)
+                        Ok(Type::unit())
                     }
                 }
             }
@@ -140,10 +140,10 @@ impl TypeChecker {
 
                 self.env.define_binding(id, new_at);
 
-                Ok(Type::Unit)
+                Ok(Type::unit())
             }
             StatementKind::While(cond, block) => {
-                unify(cond.span, self.check_expr(cond)?, Type::Bool)?;
+                unify(cond.span, self.check_expr(cond)?, Type::bool())?;
                 Ok(self.check_block(block)?)
             }
             StatementKind::Expr(expr) => Ok(self.check_expr(expr)?),
@@ -161,9 +161,9 @@ impl TypeChecker {
                     })
                     .collect();
 
-                AnnotatedType::new(fn_decl.node.ty.clone().unwrap_or(Type::Unit), false, true);
+                AnnotatedType::new(fn_decl.node.ty.clone().unwrap_or(Type::unit()), false, true);
 
-                Ok(Type::Unit)
+                Ok(Type::unit())
             }
         }
     }
@@ -187,12 +187,12 @@ impl TypeChecker {
 
         let last_ty = match block.node.statements.last() {
             Some(stmt) => self.check_stmt(stmt)?,
-            None => Type::Unit,
+            None => Type::unit(),
         };
 
         self.env.pop_scope();
         if block.node.semi {
-            Ok(Type::Unit)
+            Ok(Type::unit())
         } else {
             Ok(last_ty)
         }
@@ -203,11 +203,11 @@ impl TypeChecker {
         if id == "println!" {
             //first arg should be string
             match arguments.node.0.first() {
-                Some(str_arg) => unify(expr.span, self.check_expr(str_arg)?, Type::String)?,
+                Some(str_arg) => unify(expr.span, self.check_expr(str_arg)?, Type::string())?,
                 None => {
                     return Err(TypeError::TypeMismatch {
-                        expected: Type::String,
-                        got: Type::Unit,
+                        expected: Type::string(),
+                        got: Type::unit(),
                         span: expr.span,
                     }
                     .into());
@@ -215,10 +215,10 @@ impl TypeChecker {
             };
             //rest should i32
             for arg in arguments.node.0.iter().skip(1) {
-                unify(arg.span, self.check_expr(arg)?, Type::I32)?;
+                unify(arg.span, self.check_expr(arg)?, Type::i32())?;
             }
 
-            Ok(Type::Unit)
+            Ok(Type::unit())
         } else {
             let Some(fn_decl) = self.env.lookup_function(id) else {
                 return Err(TypeError::UnknownFunction {
@@ -258,12 +258,12 @@ impl TypeChecker {
                 unify(arg.span, binding.ty, self.check_expr(arg)?)?;
             }
 
-            Ok(fn_decl.node.ty.unwrap_or(Type::Unit))
+            Ok(fn_decl.node.ty.unwrap_or(Type::unit()))
         }
     }
 
     fn check_fn(&mut self, fn_decl: &FnDeclaration) -> Result<Type, Error> {
-        let r_type = fn_decl.node.ty.clone().unwrap_or(Type::Unit);
+        let r_type = fn_decl.node.ty.clone().unwrap_or(Type::unit());
         // Add param to bindings
         for param in fn_decl.node.parameters.node.0.iter() {
             self.env.define_binding(
@@ -328,7 +328,7 @@ impl Default for TypeChecker {
 }
 
 fn unify(span: Span, got: Type, expected: Type) -> Result<Type, Error> {
-    match got == expected {
+    match got.node == expected.node {
         true => Ok(expected),
         false => Err(TypeError::TypeMismatch {
             expected,
@@ -359,6 +359,3 @@ impl Eval<Type> for Prog {
         type_checker.check_prog(self)
     }
 }
-
-// Helpers for Val
-// Alternatively implement the TryFrom trait

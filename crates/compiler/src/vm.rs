@@ -1,6 +1,6 @@
 use crate::ast::{
     Arguments, BinOp, Block, Expr, ExprKind, FnDeclaration, Literal, Mutable, Prog, Statement,
-    StatementKind, Type, UnOp,
+    StatementKind, Type, TypeExpr, UnOp,
 };
 use crate::common::Eval;
 use crate::env;
@@ -51,17 +51,17 @@ impl Val {
         }
     }
     pub fn check_type(&self, ty: &Type) {
-        match ty {
-            Type::I32 => {
+        match ty.node {
+            TypeExpr::I32 => {
                 self.get_int();
             }
-            Type::Bool => {
+            TypeExpr::Bool => {
                 self.get_bool();
             }
-            Type::String => {
+            TypeExpr::String => {
                 self.get_string();
             }
-            Type::Unit => {
+            TypeExpr::Unit => {
                 self.get_unit();
             }
         }

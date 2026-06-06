@@ -603,19 +603,19 @@ mod parse_type {
     #[test]
     fn parse_type_i32() {
         let typ: Type = parse("i32");
-        assert_eq!(typ, Type::I32);
+        assert_eq!(typ, Type::i32());
     }
 
     #[test]
     fn parse_type_bool() {
         let typ: Type = parse("bool");
-        assert_eq!(typ, Type::Bool);
+        assert_eq!(typ, Type::bool());
     }
 
     #[test]
     fn parse_type_unit() {
         let typ: Type = parse("()");
-        assert_eq!(typ, Type::Unit);
+        assert_eq!(typ, Type::unit());
     }
 
     #[test]
@@ -745,7 +745,7 @@ mod parse_statement {
         let expected = Spanned::dummy(StatementKind::Let(
             Mutable(false),
             "a".to_string(),
-            Some(Type::I32),
+            Some(Type::i32()),
             Some(Spanned::dummy(ExprKind::Lit(Literal::Int(2)))),
         ));
         assert_eq!(stmt, expected);
@@ -757,7 +757,7 @@ mod parse_statement {
         let expected = Spanned::dummy(StatementKind::Let(
             Mutable(true),
             "a".to_string(),
-            Some(Type::I32),
+            Some(Type::i32()),
             Some(Spanned::dummy(ExprKind::Lit(Literal::Int(2)))),
         ));
         assert_eq!(stmt, expected);

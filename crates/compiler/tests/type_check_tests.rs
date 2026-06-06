@@ -12,12 +12,12 @@ mod type_expr {
     #[test]
     fn simple_ident() {
         let mut tc = TypeChecker::new();
-        let a_ty = AnnotatedType::new(Type::I32, true, true);
+        let a_ty = AnnotatedType::new(Type::i32(), true, true);
         tc.env.define_binding("test", a_ty);
         assert_eq!(
             tc.check_expr(&ExprKind::Ident("test".to_string()).into())
                 .expect("ident_failed"),
-            Type::I32,
+            Type::i32(),
         );
     }
 
@@ -28,16 +28,16 @@ mod type_expr {
         let string: Expr = ExprKind::Lit(Literal::String("".to_string())).into();
         let bool: Expr = ExprKind::Lit(Literal::Bool(false)).into();
 
-        assert_type(&unit, Type::Unit);
-        assert_type(&int, Type::I32);
-        assert_type(&string, Type::String);
-        assert_type(&bool, Type::Bool);
+        assert_type(&unit, Type::unit());
+        assert_type(&int, Type::i32());
+        assert_type(&string, Type::string());
+        assert_type(&bool, Type::bool());
     }
 
     #[test]
     fn simple_par() {
         let par: Expr = ExprKind::Par(Box::new(ExprKind::Lit(Literal::Bool(false)).into())).into();
-        assert_type(&par, Type::Bool);
+        assert_type(&par, Type::bool());
     }
 
     #[test]
@@ -51,7 +51,7 @@ mod type_expr {
                 add2(0)
             }
             "#,
-            Type::I32,
+            Type::i32(),
         );
     }
 
@@ -77,7 +77,7 @@ mod type_expr {
                 if true { () }
             }
             "#,
-            Type::Unit,
+            Type::unit(),
         );
     }
 
@@ -88,7 +88,7 @@ mod type_expr {
                 let x = if true {0} else {0}; 
                 x
             }"#,
-            Type::I32,
+            Type::i32(),
         );
     }
 
@@ -119,7 +119,7 @@ mod type_expr {
                 let x = 4;
                 x
             }"#,
-            Type::I32,
+            Type::i32(),
         );
     }
 
@@ -131,13 +131,13 @@ mod type_expr {
                 let y = "s";
                 x;
             }"#,
-            Type::Unit,
+            Type::unit(),
         );
     }
 
     #[test]
     fn simple_bin() {
-        assert_parse_type::<Expr>("4+4", Type::I32);
+        assert_parse_type::<Expr>("4+4", Type::i32());
     }
 
     #[test]
@@ -176,7 +176,7 @@ mod type_statement {
                 x = 3;
             }
             "#,
-            Type::Unit,
+            Type::unit(),
         );
     }
 
@@ -201,7 +201,7 @@ mod type_statement {
                 println!("{}", 1);
             }
             "#,
-            Type::Unit,
+            Type::unit(),
         );
     }
 
@@ -249,7 +249,7 @@ mod type_prog {
                 println!("Value: {}", 42);
             }
             "#,
-            Type::Unit,
+            Type::unit(),
         );
     }
 
@@ -299,7 +299,7 @@ mod peer_review_lab6 {
             fn main() -> i32 {
                 max(3, 7)
             }"#,
-            Type::I32,
+            Type::i32(),
         );
     }
 
@@ -317,7 +317,7 @@ mod peer_review_lab6 {
                 sum
             }
             "#,
-            Type::I32,
+            Type::i32(),
         );
     }
 
@@ -335,7 +335,7 @@ mod peer_review_lab6 {
                 if !(y < 0) { 1 } else { 0 }
             }
             "#,
-            Type::I32,
+            Type::i32(),
         );
     }
 }

@@ -1,6 +1,6 @@
 use crate::ast::{
     Block, BlockKind, FnDeclarationKind, Mutable, Parameter, ParameterKind, Parameters,
-    ParametersKind, Spanned, Type,
+    ParametersKind, Spanned, Type, TypeExpr,
 };
 use proc_macro2::Span;
 use regex::Regex;
@@ -16,12 +16,12 @@ pub fn vm_println() -> (FnDeclarationKind, Intrinsic) {
                     Spanned::dummy(ParameterKind {
                         mutable: Mutable(false),
                         id: "str".to_string(),
-                        ty: Type::String,
+                        ty: Type::string(),
                     }),
                     Spanned::dummy(ParameterKind {
                         mutable: Mutable(false),
                         id: "i".to_string(),
-                        ty: Type::I32,
+                        ty: Type::i32(),
                     }),
                 ]),
                 Span::call_site(),

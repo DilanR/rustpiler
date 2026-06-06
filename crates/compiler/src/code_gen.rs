@@ -379,7 +379,13 @@ impl CodegenVm {
         let local_alloc_idx = self.emit_fn_prologue();
 
         self.codegen_block(&fn_decl.node.body)?;
-        let returns_unit = matches!(fn_decl.node.ty, Some(Type::Unit) | None);
+        let returns_unit = match &fn_decl.node.ty {
+            Some(t) => match t.node {
+                TypeExpr::Unit => true,
+                _ => false,
+            },
+            None => true,
+        };
         if !returns_unit {
             self.env.pop_from_stack(t0);
         } else if fn_decl.node.id != "main" {
