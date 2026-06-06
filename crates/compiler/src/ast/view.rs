@@ -2,8 +2,8 @@ use serde::Serialize;
 
 use crate::{
     ast::{
-        Arguments, Block, Expr, ExprKind::*, FnDeclaration, Mutable, Parameter, Parameters, Prog,
-        Spanned, Statement, StatementKind::*, Type, TypeExpr,
+        Arguments, Block, Expr, ExprKind::*, FnDeclaration, Parameter, Parameters, Prog, Spanned,
+        Statement, StatementKind::*, Type, TypeExpr,
     },
     error::ErrRange,
 };

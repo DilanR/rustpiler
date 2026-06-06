@@ -380,10 +380,7 @@ impl CodegenVm {
 
         self.codegen_block(&fn_decl.node.body)?;
         let returns_unit = match &fn_decl.node.ty {
-            Some(t) => match t.node {
-                TypeExpr::Unit => true,
-                _ => false,
-            },
+            Some(t) => matches!(t.node, TypeExpr::Unit),
             None => true,
         };
         if !returns_unit {

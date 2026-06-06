@@ -1,6 +1,6 @@
 use crate::ast::{
-    Block, BlockKind, FnDeclarationKind, Mutable, Parameter, ParameterKind, Parameters,
-    ParametersKind, Spanned, Type, TypeExpr,
+    Block, BlockKind, FnDeclarationKind, Mutable, ParameterKind, Parameters, ParametersKind,
+    Spanned, Type,
 };
 use proc_macro2::Span;
 use regex::Regex;
