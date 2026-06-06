@@ -1,4 +1,4 @@
-use crate::ast::{BinOp, Expr, ExprKind, Literal, Spanned, Type, UnOp};
+use crate::ast::{BinOp, Expr, ExprKind, Literal, Spanned, Type, TypeExpr, UnOp};
 
 pub fn expr(kind: ExprKind) -> Expr {
     Spanned {
@@ -34,10 +34,10 @@ impl<T: Into<Literal>> From<T> for Type {
     fn from(x: T) -> Self {
         let lit: Literal = x.into();
         match lit {
-            Literal::Unit => Type::Unit,
-            Literal::Bool(_) => Type::Bool,
-            Literal::Int(_) => Type::I32,
-            Literal::String(_) => Type::String,
+            Literal::Unit => Spanned::dummy(TypeExpr::Unit),
+            Literal::Bool(_) => Spanned::dummy(TypeExpr::Bool),
+            Literal::Int(_) => Spanned::dummy(TypeExpr::I32),
+            Literal::String(_) => Spanned::dummy(TypeExpr::String),
         }
     }
 }

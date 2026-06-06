@@ -1,10 +1,9 @@
 use core::fmt;
-
 use proc_macro2::Span;
 
 use crate::ast::{
     Arguments, BinOp, Block, ExprKind, FnDeclarationKind, Literal, Mutable, Parameter,
-    ParameterKind, Parameters, ParametersKind, Prog, Spanned, StatementKind, Type, UnOp,
+    ParameterKind, Parameters, ParametersKind, Prog, Spanned, StatementKind, Type, TypeExpr, UnOp,
 };
 
 impl<T: fmt::Display> fmt::Display for Spanned<T> {
@@ -52,24 +51,23 @@ fn display_literal() {
     assert_eq!(format!("{}", Literal::Unit), "()");
 }
 
-impl fmt::Display for Type {
+impl fmt::Display for TypeExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        //todo!()
         match self {
-            Type::I32 => write!(f, "i32"),
-            Type::Bool => write!(f, "bool"),
-            Type::String => write!(f, "String"),
-            Type::Unit => write!(f, "()"),
+            TypeExpr::I32 => write!(f, "i32"),
+            TypeExpr::Bool => write!(f, "bool"),
+            TypeExpr::String => write!(f, "String"),
+            TypeExpr::Unit => write!(f, "()"),
         }
     }
 }
 
 #[test]
 fn display_type() {
-    assert_eq!(format!("{}", Type::I32), "i32");
-    assert_eq!(format!("{}", Type::Bool), "bool");
-    assert_eq!(format!("{}", Type::Unit), "()");
-    assert_eq!(format!("{}", Type::String), "String");
+    assert_eq!(format!("{}", TypeExpr::I32), "i32");
+    assert_eq!(format!("{}", TypeExpr::Bool), "bool");
+    assert_eq!(format!("{}", TypeExpr::Unit), "()");
+    assert_eq!(format!("{}", TypeExpr::String), "String");
 }
 
 impl fmt::Display for UnOp {
@@ -152,12 +150,12 @@ fn display_parameters() {
         Spanned::dummy(ParameterKind {
             mutable: Mutable(true),
             id: "testparam".to_string(),
-            ty: Type::I32,
+            ty: Spanned::dummy(TypeExpr::I32),
         }),
         Spanned::dummy(ParameterKind {
             mutable: Mutable(false),
             id: "testparam2".to_string(),
-            ty: Type::String,
+            ty: Spanned::dummy(TypeExpr::String),
         }),
     ];
     let parameters = Parameters::new(ParametersKind(params), Span::call_site());

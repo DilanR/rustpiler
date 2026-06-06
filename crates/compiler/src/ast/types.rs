@@ -26,12 +26,32 @@ impl<T: PartialEq> PartialEq for Spanned<T> {
     }
 }
 
+pub type Type = Spanned<TypeExpr>;
+
 #[derive(Debug, Clone, PartialEq, Serialize)]
-pub enum Type {
+pub enum TypeExpr {
     I32,
     Bool,
     String,
     Unit,
+}
+
+impl Type {
+    pub fn i32() -> Self {
+        Self::dummy(TypeExpr::I32)
+    }
+
+    pub fn bool() -> Self {
+        Self::dummy(TypeExpr::Bool)
+    }
+
+    pub fn string() -> Self {
+        Self::dummy(TypeExpr::String)
+    }
+
+    pub fn unit() -> Self {
+        Self::dummy(TypeExpr::Unit)
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Serialize)]
@@ -163,17 +183,17 @@ impl BinOp {
         }
     }
     pub fn expected_type(&self) -> Type {
-        match self {
-            BinOp::Add => Type::I32,
-            BinOp::Sub => Type::I32,
-            BinOp::Mul => Type::I32,
-            BinOp::Div => Type::I32,
-            BinOp::And => Type::Bool,
-            BinOp::Or => Type::Bool,
-            BinOp::Eq => Type::I32,
-            BinOp::Lt => Type::I32,
-            BinOp::Gt => Type::I32,
-        }
+        Spanned::dummy(match self {
+            BinOp::Add => TypeExpr::I32,
+            BinOp::Sub => TypeExpr::I32,
+            BinOp::Mul => TypeExpr::I32,
+            BinOp::Div => TypeExpr::I32,
+            BinOp::And => TypeExpr::Bool,
+            BinOp::Or => TypeExpr::Bool,
+            BinOp::Eq => TypeExpr::I32,
+            BinOp::Lt => TypeExpr::I32,
+            BinOp::Gt => TypeExpr::I32,
+        })
     }
 }
 impl UnOp {
@@ -184,10 +204,10 @@ impl UnOp {
         }
     }
     pub fn expected_type(&self) -> Type {
-        match self {
-            UnOp::Neg => Type::I32,
-            UnOp::Bang => Type::Bool,
-        }
+        Spanned::dummy(match self {
+            UnOp::Neg => TypeExpr::I32,
+            UnOp::Bang => TypeExpr::Bool,
+        })
     }
 }
 
