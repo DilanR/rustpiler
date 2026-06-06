@@ -1,3 +1,3 @@
 wasm-pack build crates/wasm \
   --target web \
-  --out-dir ../../playground/public/pkg
+  --out-dir ../../playground/src/features/compiler/pkg
