@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::error::{AssignmentErrorKind, CodeGenError, DuplicateKind, TypeError, VmError};
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Diagnostics(pub Vec<Diagnostic>);
 
 impl Diagnostics {
@@ -27,6 +27,7 @@ pub struct Diagnostic {
     pub message: String,
     pub severity: Severity,
     pub range: Option<ErrRange>,
+    pub related: Vec<Diagnostic>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -34,19 +35,12 @@ pub enum Severity {
     Error,
     Warning,
     Info,
+    Help,
 }
 
 impl FromIterator<Diagnostic> for Diagnostics {
     fn from_iter<T: IntoIterator<Item = Diagnostic>>(iter: T) -> Self {
         Self(iter.into_iter().collect())
-    }
-}
-
-impl From<syn::Error> for Diagnostics {
-    fn from(err: syn::Error) -> Self {
-        err.into_iter()
-            .map(Diagnostic::from)
-            .collect::<Diagnostics>()
     }
 }
 
@@ -56,6 +50,7 @@ impl From<syn::Error> for Diagnostic {
             message: err.to_string(),
             severity: Severity::Error,
             range: Some(err.span().into()),
+            related: vec![],
         }
     }
 }
@@ -67,6 +62,7 @@ impl From<CodeGenError> for Diagnostic {
             message: err.to_string(),
             severity: Severity::Error,
             range: None,
+            related: vec![],
         }
     }
 }
@@ -78,6 +74,7 @@ impl From<VmError> for Diagnostic {
             message: err.to_string(),
             severity: Severity::Error,
             range: None,
+            related: vec![],
         }
     }
 }
@@ -90,34 +87,86 @@ impl From<TypeError> for Diagnostic {
                 got,
                 span,
             } => Diagnostic {
-                message: format!("expected {}, got {}", expected, got),
+                message: format!("mismatched types: expected `{}`, got `{}`", expected, got),
                 severity: Severity::Error,
                 range: Some(span.into()),
+                related: vec![
+                    Diagnostic {
+                        message: format!("expected type `{}` originates here", expected),
+                        severity: Severity::Info,
+                        range: Some(expected.span.into()),
+                        related: vec![],
+                    },
+                    Diagnostic {
+                        message: format!("actual type `{}` originates here", got),
+                        severity: Severity::Info,
+                        range: Some(got.span.into()),
+                        related: vec![],
+                    },
+                ],
             },
+
             TypeError::UnknownFunction { name, span } => Diagnostic {
-                message: format!("undefined function `{}`", name),
+                message: format!("cannot find function `{}` in this scope", name),
                 severity: Severity::Error,
                 range: Some(span.into()),
+                related: vec![],
             },
+
             TypeError::UnknownVariable { name, span } => Diagnostic {
-                message: format!("undefined variable `{}`", name),
+                message: format!("cannot find variable `{}` in this scope", name),
                 severity: Severity::Error,
                 range: Some(span.into()),
+                related: vec![],
             },
-            TypeError::Assignment { kind, span } => {
-                let msg = match kind {
-                    AssignmentErrorKind::NotIdent => "left-hand side is not assignable",
-                    AssignmentErrorKind::NotFound => "variable not found",
-                    AssignmentErrorKind::NotMutable => "variable is not mutable",
+
+            TypeError::Assignment {
+                kind,
+                span,
+                decl_span,
+            } => {
+                let (message, related) = match kind {
+                    AssignmentErrorKind::NotIdent => (
+                        "invalid assignment target".to_string(),
+                        vec![Diagnostic {
+                            message:
+                                "only variables may appear on the left-hand side of an assignment"
+                                    .to_string(),
+                            severity: Severity::Info,
+                            range: Some(span.into()),
+                            related: vec![],
+                        }],
+                    ),
+
+                    AssignmentErrorKind::NotFound => {
+                        ("cannot assign to an unknown variable".to_string(), vec![])
+                    }
+
+                    AssignmentErrorKind::NotMutable => (
+                        "cannot assign to immutable variable".to_string(),
+                        vec![Diagnostic {
+                            message: "consider declaring the variable with `mut`".to_string(),
+                            severity: Severity::Info,
+                            range: Some(decl_span.into()),
+                            related: vec![],
+                        }],
+                    ),
                 };
 
                 Diagnostic {
-                    message: msg.to_string(),
+                    message,
                     severity: Severity::Error,
                     range: Some(span.into()),
+                    related,
                 }
             }
-            TypeError::Duplicate { kind, name, span } => {
+
+            TypeError::Duplicate {
+                kind,
+                name,
+                first_span,
+                second_span,
+            } => {
                 let kind_str = match kind {
                     DuplicateKind::Function => "function",
                 };
@@ -125,24 +174,47 @@ impl From<TypeError> for Diagnostic {
                 Diagnostic {
                     message: format!("duplicate {} `{}`", kind_str, name),
                     severity: Severity::Error,
-                    range: Some(span.into()),
+                    range: Some(second_span.into()),
+                    related: vec![Diagnostic {
+                        message: "previous definition is here".to_string(),
+                        severity: Severity::Info,
+                        range: Some(first_span.into()),
+                        related: vec![],
+                    }],
                 }
             }
+
             TypeError::Uninitialized { name, span } => Diagnostic {
-                message: format!("use of uninitialized variable `{}`", name),
+                message: format!("variable `{}` may be uninitialized", name),
                 severity: Severity::Error,
                 range: Some(span.into()),
+                related: vec![Diagnostic {
+                    message: "initialize the variable before it is used".to_string(),
+                    severity: Severity::Info,
+                    range: None,
+                    related: vec![],
+                }],
             },
 
             TypeError::ParameterArityMismatch {
                 id,
                 expected,
                 got,
-                span,
+                call_span,
+                fn_span,
             } => Diagnostic {
-                message: format!("{id} expected {expected} arguments, got {got}"),
+                message: format!(
+                    "function `{}` expects {} arguments but {} were supplied",
+                    id, expected, got,
+                ),
                 severity: Severity::Error,
-                range: Some(span.into()),
+                range: Some(call_span.into()),
+                related: vec![Diagnostic {
+                    message: "function declaration is here".to_string(),
+                    severity: Severity::Info,
+                    range: Some(fn_span.into()),
+                    related: vec![],
+                }],
             },
         }
     }

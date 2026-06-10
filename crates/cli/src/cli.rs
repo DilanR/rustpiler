@@ -50,7 +50,7 @@ impl Cli {
     pub fn execute(&self) -> anyhow::Result<()> {
         let raw = parse_file(&self.input)?;
 
-        let prog = frontend(&raw).map_err(|err| anyhow::anyhow!("Frontend failed:\n{err}"))?;
+        let prog = frontend(&raw).map_err(|err| anyhow::anyhow!("Frontend failed:\n{:?}", err))?;
 
         if let Some(path) = &self.ast {
             emit_ast(path, &prog)?;

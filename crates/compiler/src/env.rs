@@ -1,4 +1,5 @@
 use derive_more::Constructor;
+use proc_macro2::Span;
 
 use crate::ast::*;
 use crate::vm::Val;
@@ -94,11 +95,12 @@ impl Default for Env {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Constructor)]
+#[derive(Debug, Clone, Constructor)]
 pub struct AnnotatedType {
     pub ty: Type,
     pub mutable: bool,
     pub is_initialized: bool,
+    pub decl_span: Span,
 }
 
 pub struct TypeEnv {

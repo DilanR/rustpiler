@@ -7,18 +7,18 @@ use compiler::type_check::TypeChecker;
 mod type_expr {
     #![allow(clippy::all)]
 
+    use proc_macro2::Span;
+
     use super::*;
 
     #[test]
     fn simple_ident() {
         let mut tc = TypeChecker::new();
-        let a_ty = AnnotatedType::new(Type::i32(), true, true);
+        let a_ty = AnnotatedType::new(Type::i32(), true, true, Span::call_site());
         tc.env.define_binding("test", a_ty);
-        assert_eq!(
-            tc.check_expr(&ExprKind::Ident("test".to_string()).into())
-                .expect("ident_failed"),
-            Type::i32(),
-        );
+        let ty = tc.check_expr(&ExprKind::Ident("test".to_string()).into());
+        assert!(!tc.errors.is_empty());
+        assert_eq!(ty, Type::i32(),)
     }
 
     #[test]

@@ -34,6 +34,7 @@ pub enum TypeExpr {
     Bool,
     String,
     Unit,
+    Error,
 }
 
 impl Type {
@@ -51,6 +52,14 @@ impl Type {
 
     pub fn unit() -> Self {
         Self::dummy(TypeExpr::Unit)
+    }
+
+    pub fn error() -> Self {
+        Self::dummy(TypeExpr::Error)
+    }
+
+    pub fn is_error(&self) -> bool {
+        matches!(self.node, TypeExpr::Error)
     }
 }
 

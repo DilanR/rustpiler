@@ -22,13 +22,15 @@ pub enum TypeError {
     Assignment {
         kind: AssignmentErrorKind,
         span: Span,
+        decl_span: Span,
     },
 
     #[error("Duplicate {kind:?} `{name}`")]
     Duplicate {
         kind: DuplicateKind,
         name: String,
-        span: Span,
+        first_span: Span,
+        second_span: Span,
     },
 
     #[error("Uninitialized value `{name}`")]
@@ -39,7 +41,8 @@ pub enum TypeError {
         id: String,
         expected: usize,
         got: usize,
-        span: Span,
+        call_span: Span,
+        fn_span: Span,
     },
 }
 

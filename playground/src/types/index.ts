@@ -14,6 +14,7 @@ export type Diagnostic = {
   message: string;
   severity: DiagnosticSeverity;
   range: Range;
+  related: Diagnostic[];
 };
 
 export type AstNode = {
@@ -28,6 +29,7 @@ export type CompileResult = {
   result?: string;
   stdout?: string;
   ast?: AstNode;
+  time?: number;
 };
 
 export type ExampleCategory =
@@ -45,6 +47,5 @@ export type Example = {
 
 export type EditorTab =
   | "source"
-  | "output"
   | "ast"
   | "typecheck";

@@ -108,4 +108,33 @@ fn main() -> i32 {
     max(10, 20)
 }`,
   },
+
+  gcd: {
+    category: "Programs",
+    name: "GCD",
+    code: `fn gcd(a: i32, b: i32) -> i32 {
+    let mut x = a;
+    let mut y = b;
+
+    while !(x == y) {
+        if x > y {
+            x = x - y;
+        } else {
+            y = y - x;
+        }
+    }
+
+    x
+}
+
+fn main() -> () {
+    let result = gcd(48, 18);
+    println!("GCD: {}",result);
+}
+`,
+
+
+
+
+  },
 } as const;

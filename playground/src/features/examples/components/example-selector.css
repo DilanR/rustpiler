@@ -1,0 +1,79 @@
+.examples-menu {
+  position: relative;
+}
+
+.examples-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  min-width: 220px;
+
+  background: var(--gb-bg0);
+  border: 1px solid var(--gb-bg2);
+
+  z-index: 1000;
+}
+
+.examples-category-container {
+  position: relative;
+}
+
+.examples-category {
+  padding: 0.5rem 1rem;
+
+  background: var(--gb-bg0);
+  color: var(--gb-fg1);
+
+  cursor: pointer;
+}
+
+.examples-button {
+  padding: 0.5rem 1rem;
+
+  border: none;
+  background: var(--panel-bg);
+  color: var(--gb-fg1);
+
+  cursor: pointer;
+}
+
+.examples-category:hover {
+  background: var(--gb-bg1);
+}
+
+.examples-submenu {
+  position: absolute;
+
+  top: 0;
+  left: 100%;
+
+  min-width: 220px;
+
+  background: var(--gb-bg0);
+  border: 1px solid var(--gb-bg2);
+
+  z-index: 1001;
+}
+
+.examples-item {
+  display: block;
+
+  width: 100%;
+
+  text-align: left;
+
+  border: none;
+
+  background: var(--gb-bg0);
+  color: var(--gb-fg1);
+
+  padding: 0.5rem 1rem;
+
+  cursor: pointer;
+}
+
+.examples-item:hover {
+  background: var(--gb-bg1);
+  color: var(--gb-aqua);
+}

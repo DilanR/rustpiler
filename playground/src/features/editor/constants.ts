@@ -7,4 +7,10 @@ export const MONACO_OPTIONS = {
   },
   fontSize: 14,
   automaticLayout: true,
+  scrollBeyondLastLine: false,
+
+  scrollbar: {
+    vertical: "auto" as const,
+    horizontal: "auto" as const,
+  },
 };

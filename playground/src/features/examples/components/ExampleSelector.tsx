@@ -1,23 +1,42 @@
+import { useState } from "react";
 import { EXAMPLES } from "../constants";
+
+import "./example-selector.css";
 
 type Props = {
   onSelect(code: string): void;
 };
 
+
 export function ExampleSelector({
   onSelect,
 }: Props) {
-  const groupedExamples =
+  const [open, setOpen] =
+    useState(false);
+
+  const [
+    hoveredCategory,
+    setHoveredCategory,
+  ] = useState<string | null>(
+    null
+  );
+
+  const grouped =
     Object.entries(EXAMPLES).reduce(
       (acc, [key, example]) => {
-        const category =
-          example.category;
-
-        if (!acc[category]) {
-          acc[category] = [];
+        if (
+          !acc[
+          example.category
+          ]
+        ) {
+          acc[
+            example.category
+          ] = [];
         }
 
-        acc[category].push({
+        acc[
+          example.category
+        ].push({
           key,
           example,
         });
@@ -34,45 +53,72 @@ export function ExampleSelector({
     );
 
   return (
-    <select
-      defaultValue=""
-      onChange={(e) => {
-        const key = e.target.value;
-
-        if (key in EXAMPLES) {
-          onSelect(
-            EXAMPLES[
-              key as keyof typeof EXAMPLES
-            ].code
-          );
-        }
+    <div
+      className="examples-menu"
+      onMouseLeave={() => {
+        setOpen(false);
+        setHoveredCategory(null);
       }}
     >
+      <button
+        className="examples-button"
+        onMouseEnter={() =>
+          setOpen(true)
+        }
+      >
+        Examples
+      </button>
 
-      {Object.entries(
-        groupedExamples
-      ).map(
-        ([category, examples]) => (
-          <optgroup
-            key={category}
-            label={category}
-          >
-            {examples.map(
-              ({
-                key,
-                example,
-              }) => (
-                <option
-                  key={key}
-                  value={key}
-                >
-                  {example.name}
-                </option>
-              )
-            )}
-          </optgroup>
-        )
+      {open && (
+        <div className="examples-dropdown">
+          {Object.entries(grouped).map(
+            ([category, examples]) => (
+              <div
+                key={category}
+                className="examples-category-container"
+                onMouseEnter={() =>
+                  setHoveredCategory(
+                    category
+                  )
+                }
+              >
+                <div className="examples-category">
+                  {category} ▶
+                </div>
+
+                {hoveredCategory ===
+                  category && (
+                    <div className="examples-submenu">
+                      {examples.map(
+                        ({
+                          key,
+                          example,
+                        }) => (
+                          <button
+                            key={key}
+                            className="examples-item"
+                            onClick={() => {
+                              onSelect(
+                                example.code
+                              );
+                              setOpen(
+                                false
+                              );
+                            }}
+                          >
+                            {
+                              example.name
+                            }
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )}
+              </div>
+            )
+          )}
+        </div>
       )}
-    </select>
+    </div>
   );
 }

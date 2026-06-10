@@ -27,27 +27,33 @@ export function useMonacoMarkers(
 
     const markers: monaco.editor.IMarkerData[] =
       diagnostics.map((diag) => ({
-        startLineNumber:
-          diag.range.start_line,
-        startColumn:
-          diag.range.start_column + 1,
-        endLineNumber:
-          diag.range.end_line,
-        endColumn:
-          diag.range.end_column + 1,
+        startLineNumber: diag.range.start_line,
+        startColumn: diag.range.start_column + 1,
+        endLineNumber: diag.range.end_line,
+        endColumn: diag.range.end_column + 1,
         message: diag.message,
+
         severity:
           diag.severity === "Error"
-            ? monaco.MarkerSeverity
-              .Error
-            : diag.severity ===
-              "Warning"
-              ? monaco
-                .MarkerSeverity
-                .Warning
-              : monaco
-                .MarkerSeverity
-                .Info,
+            ? monaco.MarkerSeverity.Error
+            : diag.severity === "Warning"
+              ? monaco.MarkerSeverity.Warning
+              : monaco.MarkerSeverity.Info,
+
+        relatedInformation: diag.related.map(
+          (related) => ({
+            resource: model.uri,
+            message: related.message,
+            startLineNumber:
+              related.range?.start_line,
+            startColumn:
+              related.range?.start_column + 1,
+            endLineNumber:
+              related.range?.end_line,
+            endColumn:
+              related.range?.end_column + 1,
+          })
+        ),
       }));
 
     monaco.editor.setModelMarkers(

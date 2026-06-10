@@ -47,6 +47,7 @@ impl fmt::Display for TypeExpr {
             TypeExpr::Bool => write!(f, "bool"),
             TypeExpr::String => write!(f, "String"),
             TypeExpr::Unit => write!(f, "()"),
+            TypeExpr::Error => write!(f, "err"),
         }
     }
 }

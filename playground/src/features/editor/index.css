@@ -1,26 +1,24 @@
 .editor-tabs {
   display: flex;
-  border-bottom: 1px solid #333;
+  background: var(--panel-bg);
 }
 
 .editor-tab {
-  padding: 0.5rem 1rem;
   border: none;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  background: #1e1e1e;
-  color: #aaa;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
+
+  background: var(--panel-bg);
+  color: var(--text-secondary);
 }
 
 .editor-tab:hover {
-  background: #2d2d2d;
+  background: var(--panel-bg-alt);
 }
 
 .editor-tab--active {
-  background: #252526;
-  color: white;
+  background: var(--panel-bg-alt);
+  color: var(--gb-yellow);
 }
 
 .editor-container {
@@ -29,15 +27,72 @@
 }
 
 .output-editor {
-  height: 300px;
+  height: 100%;
+  flex-shrink: 0;
 }
 
 .ast-highlight {
-  background-color: rgba(
-    255,
-    255,
-    0,
-    0.35
-  );
+  background-color: rgba(255,
+      255,
+      0,
+      0.35);
   border-radius: 2px;
+}
+
+.main-container {
+  flex: 0 0 5%;
+  display: flex;
+  margin-top: 0.5rem;
+}
+
+.editor-terminal {
+  flex: 1;
+
+  min-height: 0;
+
+  margin-top: 0.5rem;
+
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+}
+
+.editor-toolbar {
+  flex: 0 0 5%;
+
+  display: flex;
+
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+
+  border-radius: 5px;
+}
+
+.editor-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.editor-workspace {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+}
+
+.run-button {
+  background-color: var(--gb-red);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+  display: inline-block;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 4px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }

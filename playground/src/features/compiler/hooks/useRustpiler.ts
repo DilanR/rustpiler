@@ -31,6 +31,7 @@ export function useRustpiler() {
 
     try {
       const response = compile(code) as CompileResult;
+      console.log(response);
       setResult(response);
     } catch (err) {
       console.error(err);
@@ -45,6 +46,7 @@ export function useRustpiler() {
               end_line: 1,
               end_column: 1,
             },
+            related: []
           },
         ],
       });

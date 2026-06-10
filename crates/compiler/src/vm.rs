@@ -64,6 +64,7 @@ impl Val {
             TypeExpr::Unit => {
                 self.get_unit();
             }
+            TypeExpr::Error => panic!("Should not be sent to vm!"),
         }
     }
 }

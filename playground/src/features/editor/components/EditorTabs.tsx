@@ -8,9 +8,7 @@ type Props = {
 
 const tabs: EditorTab[] = [
   "source",
-  "output",
   "ast",
-  "typecheck",
 ];
 
 export function EditorTabs({

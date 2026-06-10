@@ -1,3 +1,5 @@
+import "../index.css";
+
 type Props = {
   loading: boolean;
   onRun: () => void;
@@ -5,8 +7,8 @@ type Props = {
 
 export function RunButton({ loading, onRun }: Props) {
   return (
-    <button onClick={onRun} disabled={loading}>
-      {loading ? "Running..." : "Run"}
+    <button className="run-button" onClick={onRun} disabled={!loading}>
+      {!loading ? "Running..." : "▶ Run"}
     </button>
   );
 }
