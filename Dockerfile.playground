@@ -5,9 +5,7 @@ RUN cargo install wasm-pack
 WORKDIR /app
 COPY . .
 
-RUN wasm-pack build crates/wasm \
-  --target web \
-  --out-dir ../../playground/src/features/compiler/pkg
+RUN ./scripts/build-playground.sh
 
 FROM node:22-alpine AS frontend-builder
 
