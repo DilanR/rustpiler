@@ -10,8 +10,8 @@ use crate::{
     vm::{VM, Val},
 };
 
-pub fn frontend(raw: &str) -> Result<Prog, Vec<Error>> {
-    let prog: Prog = try_parse(raw).map_err(|err| vec![err.into()])?;
+pub fn frontend(raw: &str) -> Result<Prog, (Option<Prog>, Vec<Error>)> {
+    let prog: Prog = try_parse(raw).map_err(|err| (None, vec![err.into()]))?;
 
     let mut type_checker = TypeChecker::new();
 
@@ -20,11 +20,14 @@ pub fn frontend(raw: &str) -> Result<Prog, Vec<Error>> {
     if type_checker.errors.is_empty() {
         Ok(prog)
     } else {
-        Err(type_checker
-            .errors
-            .iter()
-            .map(|e| e.clone().into())
-            .collect())
+        Err((
+            Some(prog),
+            type_checker
+                .errors
+                .iter()
+                .map(|e| e.clone().into())
+                .collect(),
+        ))
     }
 }
 

@@ -24,12 +24,12 @@ impl CompileResult {
         }
     }
 
-    fn failure(diagnostics: Diagnostics) -> Self {
+    fn failure(diagnostics: Diagnostics, ast: Option<AstNode>) -> Self {
         Self {
             diagnostics,
             result: None,
             stdout: None,
-            ast: None,
+            ast,
             time_ms: None,
         }
     }
@@ -39,14 +39,19 @@ fn compile_impl(source: &str) -> CompileResult {
     let prog = match pipeline::frontend(source) {
         Ok(p) => p,
         Err(e) => {
-            let diagnostics = e.iter().map(|e| e.clone().into()).collect();
-            return CompileResult::failure(diagnostics);
+            let diagnostics = e.1.iter().map(|e| e.clone().into()).collect();
+            return CompileResult::failure(diagnostics, e.0.map(|p| AstNode::from(&p)));
         }
     };
 
     let result = match pipeline::interpret(&prog) {
         Ok(val) => val,
-        Err(e) => return CompileResult::failure(Diagnostics(vec![e.clone().into()])),
+        Err(e) => {
+            return CompileResult::failure(
+                Diagnostics(vec![e.clone().into()]),
+                Some(AstNode::from(&prog)),
+            );
+        }
     };
 
     CompileResult::success(result, AstNode::from(&prog))
