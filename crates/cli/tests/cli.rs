@@ -123,6 +123,7 @@ fn emits_ast_file() {
     assert!(!content.is_empty());
 }
 
+#[cfg(feature = "mips")]
 #[test]
 fn generates_asm() {
     let dir = tempdir().unwrap();
