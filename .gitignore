@@ -1,5 +1,6 @@
 target/
 dist/
+.vite/
 node_modules/
 Cargo.lock
 *.asm
