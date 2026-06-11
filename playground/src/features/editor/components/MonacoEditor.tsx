@@ -6,6 +6,10 @@ type Props = {
   code: string;
   setCode: (value: string) => void;
   onRun?: () => void;
+  onSourceSelect?: (
+    line: number,
+    column: number
+  ) => void;
 
   onMount: (
     editor: monaco.editor.IStandaloneCodeEditor,
@@ -17,6 +21,7 @@ export function MonacoEditor({
   code,
   setCode,
   onRun,
+  onSourceSelect,
   onMount,
 }: Props) {
   function handleMount(
@@ -32,6 +37,20 @@ export function MonacoEditor({
         onRun?.();
       }
     );
+
+    editor.onMouseDown((event) => {
+      const position =
+        event.target.position;
+
+      if (!position) {
+        return;
+      }
+
+      onSourceSelect?.(
+        position.lineNumber,
+        position.column - 1
+      );
+    });
 
     onMount(editor, monacoInstance);
   }

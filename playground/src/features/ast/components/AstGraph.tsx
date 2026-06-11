@@ -39,6 +39,9 @@ export function AstGraph({
       expanded
     );
 
+  console.log("node", node?.label);
+  console.log("expanded", [...expanded]);
+  console.log("visibleTree", visibleTree);
   useD3AstGraph(
     svgRef,
     visibleTree,
@@ -59,6 +62,8 @@ export function AstGraph({
     <svg
       ref={svgRef}
       className="ast-graph"
+      width="100%"
+      height="100%"
     />
   );
 }

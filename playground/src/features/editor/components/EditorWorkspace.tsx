@@ -1,17 +1,14 @@
 import { CodeEditor } from "./CodeEditor";
-import { EditorTabs } from "./EditorTabs";
-import { OutputEditor } from "./OutputEditor";
 import { CompilerTerminal } from "./CompilerTerminal";
 import { RunButton } from "./RunButton.tsx";
 
-import { useEditorTabs }
-  from "@/features/editor/hooks/useEditorTabs";
-
 import type {
+  AstNode,
   Diagnostic,
   Range,
 } from "@/types";
 import { ExampleSelector } from "@/features/examples/index.ts";
+import { AstPanel } from "@/features/ast";
 
 type Props = {
   code: string;
@@ -24,6 +21,14 @@ type Props = {
 
   diagnostics?: Diagnostic[];
   highlightedRange?: Range;
+  ast?: AstNode;
+  selectedAstNode?: AstNode;
+  onSourceSelect?: (
+    line: number,
+    column: number
+  ) => void;
+  onAstSelect?: (node: AstNode) => void;
+  onAstReset?: () => void;
   stdout?: string;
   result?: string;
 };
@@ -35,24 +40,20 @@ export function EditorWorkspace({
   loading,
   diagnostics = [],
   highlightedRange,
+  ast,
+  selectedAstNode,
+  onSourceSelect,
+  onAstSelect,
+  onAstReset,
   stdout = "",
   result = "",
 }: Props) {
-  const {
-    activeTab,
-    setActiveTab,
-  } = useEditorTabs();
-
   return (
     <div className="editor-workspace">
 
       <div className="editor-toolbar" >
         <ExampleSelector onSelect={setCode} />
 
-        <EditorTabs
-          activeTab={activeTab}
-          onChange={setActiveTab}
-        />
         <RunButton
           loading={loading}
           onRun={onRun}
@@ -60,41 +61,29 @@ export function EditorWorkspace({
       </div >
 
       <div className="main-container">
-        {activeTab ===
-          "source" && (
-            <CodeEditor
-              code={code}
-              setCode={setCode}
-              onRun={onRun}
-              diagnostics={
-                diagnostics
-              }
-              highlightedRange={
-                highlightedRange
-              }
-            />
-          )
-        }
+        <div className="source-panel">
+          <CodeEditor
+            code={code}
+            setCode={setCode}
+            onRun={onRun}
+            diagnostics={
+              diagnostics
+            }
+            highlightedRange={
+              highlightedRange
+            }
+            onSourceSelect={
+              onSourceSelect
+            }
+          />
+        </div>
 
-        {
-          activeTab ===
-          "ast" && (
-            <OutputEditor
-              stdout="AST tab coming soon"
-              result=""
-            />
-          )
-        }
-
-        {
-          activeTab ===
-          "typecheck" && (
-            <OutputEditor
-              stdout="Typecheck tab coming soon"
-              result=""
-            />
-          )
-        }
+        <AstPanel
+          root={ast}
+          selectedRoot={selectedAstNode}
+          onSelect={onAstSelect}
+          onReset={onAstReset}
+        />
       </div>
 
       <div className="editor-terminal">

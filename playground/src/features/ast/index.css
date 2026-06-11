@@ -1,0 +1,62 @@
+.ast-panel {
+  flex: 0 1 42%;
+  min-width: 320px;
+  height: 340px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--panel-bg);
+}
+
+.ast-panel__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ast-panel__title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--gb-fg1);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ast-panel__toggle {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ast-panel__toggle-button {
+  border: none;
+  padding: 0.25rem 0.5rem;
+  background: var(--panel-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.ast-panel__toggle-button:hover,
+.ast-panel__toggle-button--active {
+  background: var(--panel-bg-alt);
+  color: var(--gb-yellow);
+}
+
+.ast-panel__content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.5rem;
+}
+
+.ast-graph {
+  display: block;
+}

@@ -27,25 +27,15 @@ export function useD3AstGraph(
 
     const tree = d3
       .tree<AstNode>()
-      .nodeSize([180, 100]);
+      .nodeSize([140, 80]);
 
     tree(root);
-
-    const width = 1400;
-    const height = Math.max(
-      800,
-      root.height * 120
-    );
-
-    svg
-      .attr("width", width)
-      .attr("height", height);
 
     const g = svg
       .append("g")
       .attr(
         "transform",
-        "translate(80,50)"
+        "translate(190,50)"
       );
 
     //

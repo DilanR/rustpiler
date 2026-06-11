@@ -20,6 +20,10 @@ type Props = {
   onRun?: () => void;
   diagnostics?: Diagnostic[];
   highlightedRange?: Range;
+  onSourceSelect?: (
+    line: number,
+    column: number
+  ) => void;
 };
 
 export function CodeEditor({
@@ -28,6 +32,7 @@ export function CodeEditor({
   onRun,
   diagnostics = [],
   highlightedRange,
+  onSourceSelect,
 }: Props) {
   const editorRef =
     useRef<monaco.editor.IStandaloneCodeEditor | null>(
@@ -56,6 +61,9 @@ export function CodeEditor({
       code={code}
       setCode={setCode}
       onRun={onRun}
+      onSourceSelect={
+        onSourceSelect
+      }
       onMount={(
         editor,
         monaco

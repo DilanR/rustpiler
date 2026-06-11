@@ -29,7 +29,7 @@ export type CompileResult = {
   result?: string;
   stdout?: string;
   ast?: AstNode;
-  time?: number;
+  time_ms?: number;
 };
 
 export type ExampleCategory =
