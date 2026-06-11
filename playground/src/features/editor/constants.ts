@@ -1,5 +1,5 @@
 export const EDITOR_HEIGHT =
-  "300px";
+  "340px";
 
 export const MONACO_OPTIONS = {
   minimap: {

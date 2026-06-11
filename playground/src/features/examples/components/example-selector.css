@@ -7,7 +7,7 @@
   top: 100%;
   left: 0;
 
-  min-width: 220px;
+  min-width: fit-content;
 
   background: var(--gb-bg0);
   border: 1px solid var(--gb-bg2);
@@ -24,6 +24,7 @@
 
   background: var(--gb-bg0);
   color: var(--gb-fg1);
+  font: inherit;
 
   cursor: pointer;
 }
