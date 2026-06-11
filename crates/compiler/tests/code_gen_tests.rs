@@ -1,3 +1,4 @@
+#![cfg(feature = "mips")]
 use compiler::ast::*;
 use compiler::common::codegen_instrs;
 use mips::instr::Instr;

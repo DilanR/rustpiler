@@ -348,7 +348,7 @@ impl TypeChecker {
         }
 
         //valid program needs main
-        let _ = match self.env.lookup_function("main") {
+        let main_fn = match self.env.lookup_function("main") {
             Some(f) => f,
             None => {
                 return self.report(TypeError::UnknownFunction {
@@ -358,7 +358,10 @@ impl TypeChecker {
             }
         };
 
-        Type::unit()
+        match main_fn.node.ty {
+            Some(t) => t,
+            None => Type::unit(),
+        }
     }
 }
 

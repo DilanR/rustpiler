@@ -1,10 +1,18 @@
+#[cfg(feature = "mips")]
+use crate::error::CodeGenError;
+
+#[cfg(feature = "mips")]
 use mips::{instr::Instr, rf::Reg, vm::Mips};
+
+#[cfg(feature = "mips")]
 use regex::Regex;
+
+#[cfg(feature = "mips")]
+use crate::common::Eval;
 
 use crate::{
     ast::Prog,
-    common::Eval,
-    error::{CodeGenError, Error},
+    error::Error,
     parse::try_parse,
     type_check::TypeChecker,
     vm::{VM, Val},
@@ -37,6 +45,7 @@ pub fn interpret(prog: &Prog) -> Result<(Val, String), Error> {
     Ok((result, vm.stdout()))
 }
 
+#[cfg(feature = "mips")]
 pub fn code_gen(ast: &Prog) -> Result<(u32, Vec<String>), Error> {
     let instrs: Vec<Instr> = ast.eval()?;
     let mut mips = Mips::new(mips::instrs::Instrs(instrs.to_vec()));
@@ -52,6 +61,7 @@ pub fn code_gen(ast: &Prog) -> Result<(u32, Vec<String>), Error> {
     Ok((result, parse_instrs(instrs)))
 }
 
+#[cfg(feature = "mips")]
 fn parse_instrs(instrs: Vec<Instr>) -> Vec<String> {
     // Instr is in external crate, fmt::display cannot be implemented
     // Printing the debug of Instr gave a good understanding of the structure.

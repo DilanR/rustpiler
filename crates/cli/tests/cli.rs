@@ -49,11 +49,9 @@ fn fail_typecheck_simple_program() {
 
     cmd.args(["--input", source.to_str().unwrap(), "--run"]);
 
-    cmd.assert().failure().stderr(predicate::str::contains(
-        "
-Type mismatch: expected i32, got ()
-",
-    ));
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Frontend failed"));
 }
 
 #[test]

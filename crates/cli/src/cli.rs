@@ -8,9 +8,12 @@ use anyhow::{Context, bail};
 use clap::Parser;
 
 use compiler::{
-    pipeline::{code_gen, frontend, interpret},
+    pipeline::{frontend, interpret},
     vm::Val,
 };
+
+#[cfg(feature = "mips")]
+use compiler::pipeline::code_gen;
 
 #[derive(Debug, Parser)]
 #[command(name = "rustpiler")]
@@ -34,10 +37,12 @@ pub struct Cli {
     pub run: bool,
 
     /// Generate assembly
+    #[cfg(feature = "mips")]
     #[arg(short = 'c', long = "codegen")]
     pub codegen: bool,
 
     /// Output assembly path
+    #[cfg(feature = "mips")]
     #[arg(long = "asm", value_name = "PATH")]
     pub asm: Option<PathBuf>,
 }
@@ -50,7 +55,10 @@ impl Cli {
     pub fn execute(&self) -> anyhow::Result<()> {
         let raw = parse_file(&self.input)?;
 
-        let prog = frontend(&raw).map_err(|err| anyhow::anyhow!("Frontend failed:\n{:?}", err))?;
+        let prog = frontend(&raw).map_err(|err| {
+            let errors: String = err.1.iter().map(|e| format!("{}\n", e)).collect();
+            anyhow::anyhow!("Frontend failed:\n{errors}")
+        })?;
 
         if let Some(path) = &self.ast {
             emit_ast(path, &prog)?;
@@ -63,14 +71,17 @@ impl Cli {
             print_interpret_result(&result.0);
         }
 
-        if self.codegen || self.asm.is_some() {
-            let (result, asm) =
-                code_gen(&prog).map_err(|err| anyhow::anyhow!("Code generation failed:\n{err}"))?;
+        #[cfg(feature = "mips")]
+        {
+            if self.codegen || self.asm.is_some() {
+                let (result, asm) = code_gen(&prog)
+                    .map_err(|err| anyhow::anyhow!("Code generation failed:\n{err}"))?;
 
-            println!("{}", result);
+                println!("{}", result);
 
-            if let Some(path) = &self.asm {
-                write_asm(path, &asm)?;
+                if let Some(path) = &self.asm {
+                    write_asm(path, &asm)?;
+                }
             }
         }
 
@@ -132,6 +143,7 @@ fn emit_ast(path: &Path, ast: &impl std::fmt::Debug) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "mips")]
 fn write_asm(path: &Path, asm: &[String]) -> anyhow::Result<()> {
     let mut output =
         File::create(path).with_context(|| format!("Failed to create {}", path.display()))?;

@@ -17,7 +17,9 @@ where
 }
 
 // emit instructions using Eval trait
+#[cfg(feature = "mips")]
 use mips::instr::Instr;
+#[cfg(feature = "mips")]
 pub fn codegen_instrs<T1>(s: &str) -> Result<Vec<Instr>, Error>
 where
     T1: syn::parse::Parse + std::fmt::Display + Eval<Vec<Instr>>,

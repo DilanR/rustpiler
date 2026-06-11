@@ -7,6 +7,7 @@ pub mod intrinsics;
 pub mod ast;
 pub mod parse;
 
+#[cfg(feature = "mips")]
 pub mod code_gen;
 pub mod env;
 pub mod type_check;

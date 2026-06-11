@@ -17,7 +17,7 @@ mod type_expr {
         let a_ty = AnnotatedType::new(Type::i32(), true, true, Span::call_site());
         tc.env.define_binding("test", a_ty);
         let ty = tc.check_expr(&ExprKind::Ident("test".to_string()).into());
-        assert!(!tc.errors.is_empty());
+        assert!(tc.errors.is_empty());
         assert_eq!(ty, Type::i32(),)
     }
 
