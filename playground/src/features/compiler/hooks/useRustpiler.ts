@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import init, { compile } from "../pkg/wasm.js";
+import init, { compile } from "../../../../pkg";
 import type { CompileResult } from "@/types";
 
 export function useRustpiler() {

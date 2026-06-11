@@ -12,6 +12,7 @@
 
 .about-me__title {
   margin: 0;
+  color: var(--gb-fg2);
   font-size: 1rem;
 }
 

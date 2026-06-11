@@ -9,6 +9,7 @@ A small compiler toolchain for the RnR language, including parsing, type checkin
 - Execute programs in the tree-walk VM
 - Generate MIPS-like instructions and run them with the mips VM
 - Dump AST and assembly to files
+- A [playground](https://rustpiler.dilred.dev) featuring diagnostics and view of Ast
 
 ## Build
 

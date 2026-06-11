@@ -18,7 +18,7 @@ export function AstPanel({
   root,
   selectedRoot,
   onSelect,
-  onReset,
+  /*onReset,*/
 }: Props) {
   const [mode, setMode] =
     useState<AstViewMode>("tree");
@@ -30,9 +30,10 @@ export function AstPanel({
   const visibleRoot =
     selectedRoot ?? root;
 
-  const viewKey = selectedRoot
+  /*const viewKey = selectedRoot
     ? `${selectedRoot.kind}:${selectedRoot.label}:${selectedRoot.span?.start_line ?? 0}:${selectedRoot.span?.start_column ?? 0}`
     : "program";
+    */
 
   return (
     <aside className="ast-panel">
