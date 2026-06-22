@@ -7,7 +7,6 @@ type Props = {
   onSelect(code: string): void;
 };
 
-
 export function ExampleSelector({
   onSelect,
 }: Props) {

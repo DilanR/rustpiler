@@ -1,4 +1,5 @@
 import Editor from "@monaco-editor/react";
+import { MONACO_OPTIONS_READ_ONLY } from "../constants"
 import "../index.css"
 
 type Props = {
@@ -17,19 +18,10 @@ export function CompilerTerminal({
 
   return (
     <Editor
-      height="150px"
+      className="output-terminal"
       language="shell"
       value={content}
-      options={{
-        readOnly: true,
-        minimap: {
-          enabled: false,
-        },
-        lineNumbers: "off",
-        folding: false,
-        scrollBeyondLastLine: false,
-        wordWrap: "on",
-      }}
+      options={MONACO_OPTIONS_READ_ONLY}
     />
   );
 }

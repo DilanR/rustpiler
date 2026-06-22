@@ -1,0 +1,158 @@
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar {
+  max-height: var(--content-dvh);
+  flex-shrink: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+
+.main {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 5px solid var(--border-color);
+  border-top: 0px;
+
+  border-radius: 10px;
+}
+
+.container-legend {
+  flex: 0 0 auto;
+  color: var(--text-primary);
+  text-align: left;
+  font-family: monospace;
+  background-color: var(--border-color);
+
+  min-height: 0;
+}
+
+.output {
+  display: flex;
+  flex-direction: column;
+
+  height: var(--output-dvh);
+
+  min-height: 0;
+
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  border: 5px solid var(--border-color);
+  border-top: 0;
+  border-radius: 10px;
+}
+
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+  overflow: hidden;
+
+  background: var(--panel-bg);
+}
+
+.sidebar__content {
+  flex: 1;
+  overflow: hidden;
+  padding: 0.5rem;
+}
+
+.sidebar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  padding: 0.35rem;
+
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-toolbar__title {
+  flex: 1;
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--gb-fg1);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+}
+
+.sidebar-toolbar__actions {
+  display: flex;
+
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+
+  overflow: hidden;
+}
+
+.sidebar-toolbar__button {
+  border: none;
+
+  padding: 0.25rem 1.5rem;
+
+  background: var(--panel-bg);
+  color: var(--text-secondary);
+
+  cursor: pointer;
+}
+
+.sidebar-toolbar__button--compact {
+  padding: 0.25rem;
+}
+
+.sidebar-toolbar__button:hover,
+.sidebar-toolbar__button--active {
+  background: var(--panel-bg-alt);
+  color: var(--gb-yellow);
+}
+
+.sidebar-toolbar__button--disabled {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sidebar-toolbar__button--disabled:hover {
+  background: var(--panel-bg);
+  color: var(--text-secondary);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar--collapsed {
+  width: 20px;
+}

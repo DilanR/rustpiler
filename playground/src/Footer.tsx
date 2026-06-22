@@ -1,7 +1,7 @@
 import { FaGithub } from "react-icons/fa";
-import "./styles/about_me.css"
+import "./styles/footer.css"
 
-export function AboutMe() {
+export function Footer() {
   return (
     <section className="about-me">
       <h3 className="about-me__title">

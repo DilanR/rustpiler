@@ -1,9 +1,10 @@
-import { RustpilerPage } from "../RustpilerPage";
-import { AboutMe } from "../AboutMe";
+import { useWorkspaceComponents } from "@/workspace/hooks/useWorkspaceComponents";
+import { Footer } from "../Footer";
+import { Workspace } from "../workspace/components/Workspace"
 
 export default function App() {
-  return <div>
-    <RustpilerPage />
-    <AboutMe />
-  </div>;
+  return <>
+    <Workspace {...useWorkspaceComponents()} />
+    <Footer />
+  </>;
 }

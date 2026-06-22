@@ -1,6 +1,7 @@
 import Editor from "@monaco-editor/react";
 import type * as monaco from "monaco-editor";
-import { EDITOR_HEIGHT, MONACO_OPTIONS } from "../constants"
+import { MONACO_OPTIONS } from "../constants"
+import "../index.css"
 
 type Props = {
   code: string;
@@ -57,7 +58,7 @@ export function MonacoEditor({
 
   return (
     <Editor
-      height={EDITOR_HEIGHT}
+      className="editor-terminal"
       language="rust"
       value={code}
       onChange={(value) =>

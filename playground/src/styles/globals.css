@@ -2,10 +2,15 @@ html,
 body,
 #root {
   width: 100%;
-  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
 
   margin: 0;
   padding: 0;
+  --content-dvh: 70dvh;
+  --output-dvh: 20dvh;
 
   background: var(--gb-bg0);
   color: var(--gb-fg1);

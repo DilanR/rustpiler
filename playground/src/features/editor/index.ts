@@ -1,9 +1,8 @@
 export { CodeEditor }
   from "./components/CodeEditor";
 
-export { EditorTabs }
-  from "./components/EditorTabs";
+export { CompilerTerminal }
+  from "./components/CompilerTerminal";
 
-export { OutputEditor }
-  from "./components/OutputEditor";
-
+export { RunButton }
+  from "./components/RunButton";

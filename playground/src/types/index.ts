@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type DiagnosticSeverity =
   | "Error"
   | "Warning"
@@ -49,3 +51,10 @@ export type EditorTab =
   | "source"
   | "ast"
   | "typecheck";
+
+export type WorkspaceComponents = {
+  toolbar: ReactNode;
+  editor: ReactNode;
+  sidebar: ReactNode;
+  console: ReactNode;
+}
