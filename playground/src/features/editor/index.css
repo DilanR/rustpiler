@@ -26,10 +26,6 @@
   border-top: none;
 }
 
-.output-editor {
-  height: 100%;
-  flex-shrink: 0;
-}
 
 .ast-highlight {
   background-color: rgba(255,
@@ -115,16 +111,6 @@
   display: block;
 }
 
-.editor-terminal {
-  flex: 1;
-
-  min-height: 0;
-
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-}
 
 .editor-toolbar {
   flex: 0 0 5%;
@@ -167,4 +153,17 @@
   margin-right: 6px;
   margin-top: 4px;
   margin-bottom: 4px;
+}
+
+
+.footer {
+  flex: 0 0 auto;
+}
+
+.output-terminal {
+  height: var(--output-dvh);
+}
+
+.editor-terminal {
+  height: var(--content-dvh);
 }

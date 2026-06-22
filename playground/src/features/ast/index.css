@@ -1,12 +1,6 @@
 .ast-panel {
-  flex: 0 1 42%;
-  min-width: 320px;
-  height: 340px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
   border: 1px solid var(--border-color);
-  border-radius: 5px;
+  max-height: inherit;
   background: var(--panel-bg);
 }
 

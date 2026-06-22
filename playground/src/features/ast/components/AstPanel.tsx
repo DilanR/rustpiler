@@ -36,7 +36,7 @@ export function AstPanel({
     */
 
   return (
-    <aside className="ast-panel">
+    <>
       <div className="ast-panel__toolbar">
         <div className="ast-panel__title">
           {visibleRoot.label}
@@ -95,6 +95,6 @@ export function AstPanel({
           />
         )}
       </div>
-    </aside>
+    </>
   );
 }
