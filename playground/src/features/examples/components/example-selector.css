@@ -39,6 +39,11 @@
   cursor: pointer;
 }
 
+.examples-button:hover {
+  background: var(--gb-bg1);
+  color: var(--gb-aqua);
+}
+
 .examples-category:hover {
   background: var(--gb-bg1);
 }

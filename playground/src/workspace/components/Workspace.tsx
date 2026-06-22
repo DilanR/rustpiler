@@ -3,12 +3,12 @@ import "../index.css"
 
 /*
 ┌─────────────────────────────────────────────────────────────────────┐
-│ Toolbar                                                             │
+│ WorkSpaceToolbar                                                    │
 ├─────────────────────────────────────────────────────────────────────┤
-│ Content                                                             │
+│ Content                                          Sidebar            │
 │  ┌──────────────────────────────────┐ ┌──────────────────────────┐  │
-│  │                                  │ │                          │  │
-│  │             Editor               │ │         Sidebar          │  │
+│  │                                  │ │SidebarToolbar            │  │
+│  │             Editor               │ │──────────────────────────│  │
 │  │                                  │ │                          │  │
 │  │                                  │ │                          │  │
 │  │                                  │ │                          │  │
@@ -27,7 +27,7 @@ import "../index.css"
 └─────────────────────────────────────────────────────────────────────┘
 */
 
-export function WorkSpace(
+export function Workspace(
   components:
     WorkspaceComponents) {
   return (

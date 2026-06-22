@@ -39,7 +39,7 @@ export function useMonacoDecorations(
         ),
         options: {
           inlineClassName:
-            "ast-highlight",
+            "code-highlight",
         },
       },
     ]);

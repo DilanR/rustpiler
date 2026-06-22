@@ -8,7 +8,7 @@ type Props = {
 export function RunButton({ loading, onRun }: Props) {
   return (
     <button className="run-button" onClick={onRun} disabled={!loading}>
-      {!loading ? "Running..." : "▶ Run"}
+      {!loading ? "Loading..." : "▶ Run"}
     </button>
   );
 }

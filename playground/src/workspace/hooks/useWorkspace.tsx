@@ -5,7 +5,7 @@ import { findNodeAtPosition } from "@/features/ast/utils/findNodeAtPosition";
 
 import type { AstNode, Range } from "@/types";
 
-export function useWorkSpace() {
+export function useWorkspace() {
   const compiler = useRustpiler();
 
   const [selectedRange, setSelectedRange] =

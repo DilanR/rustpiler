@@ -17,6 +17,7 @@ export const MONACO_OPTIONS_READ_ONLY = {
   minimap: {
     enabled: false,
   },
+  automaticLayout: true,
   lineNumbers: "off" as const,
   folding: false,
   scrollBeyondLastLine: false,

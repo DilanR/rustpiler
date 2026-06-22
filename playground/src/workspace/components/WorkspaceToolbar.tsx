@@ -9,7 +9,7 @@ type Props = {
   onRun: () => void;
 };
 
-export function WorkSpaceToolBar({ loading, onRun, onSelect }: Props) {
+export function WorkspaceToolbar({ loading, onRun, onSelect }: Props) {
   return (
     <div className="editor-toolbar" >
       <ExampleSelector onSelect={onSelect} />

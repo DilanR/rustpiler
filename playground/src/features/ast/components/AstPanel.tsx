@@ -4,6 +4,7 @@ import type { AstNode } from "@/types";
 
 import { AstGraph } from "./AstGraph";
 import { AstTree } from "./AstView";
+import "../index.css"
 
 type AstViewMode = "tree" | "graph";
 
@@ -37,51 +38,6 @@ export function AstPanel({
 
   return (
     <>
-      <div className="ast-panel__toolbar">
-        <div className="ast-panel__title">
-          {visibleRoot.label}
-        </div>
-
-        <div className="ast-panel__toggle">
-          {/* TODO: Include after Click code -> See node in Tree/graph done
-          <button
-            type="button"
-            className="ast-panel__toggle-button"
-            onClick={onReset}
-            disabled={!selectedRoot}
-          >
-            Reset
-          </button>
-          */}
-
-          <button
-            type="button"
-            className={
-              mode === "tree"
-                ? "ast-panel__toggle-button ast-panel__toggle-button--active"
-                : "ast-panel__toggle-button"
-            }
-            onClick={() => setMode("tree")}
-          >
-            Tree
-          </button>
-
-          {/* TODO: Fix better Graph functionallity!
-          <button
-            type="button"
-            className={
-              mode === "graph"
-                ? "ast-panel__toggle-button ast-panel__toggle-button--active"
-                : "ast-panel__toggle-button"
-            }
-            onClick={() => setMode("graph")}
-          >
-            Graph
-          </button>
-          */}
-        </div>
-      </div>
-
       <div className="ast-panel__content">
         {mode === "tree" ? (
           <AstTree
