@@ -20,9 +20,7 @@ type Props = {
 
 export function Sidebar({
   root,
-  selectedRoot,
   onSelect,
-  onReset,
 }: Props) {
   const [view, setView] =
     useState<SidebarView>("ast");
@@ -61,6 +59,8 @@ export function Sidebar({
           )}
         </div>
       )}
+
+
     </div >
   );
 }
