@@ -1,5 +1,5 @@
 import { ExampleSelector } from "@/features/examples";
-import { RunButton } from "@/features/editor/components/RunButton"
+import { RunButton } from "@/features/editor"
 
 type Props = {
   onSelect: (
@@ -9,9 +9,9 @@ type Props = {
   onRun: () => void;
 };
 
-export function ToolBar({ loading, onRun, onSelect }: Props) {
+export function WorkSpaceToolBar({ loading, onRun, onSelect }: Props) {
   return (
-    <div className="editor-toolbar pt-4 px-4" >
+    <div className="editor-toolbar" >
       <ExampleSelector onSelect={onSelect} />
 
       <RunButton

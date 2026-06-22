@@ -39,6 +39,8 @@ export function useWorkSpace() {
   ) {
     setSelectedAstNode(node);
     setSelectedRange(node.span);
+
+    console.log(selectedAstNode)
   }
 
   function handleAstReset() {
