@@ -2,6 +2,9 @@ name: Deploy Playground
 
 on:
   push:
+    paths:
+      - "playground/**"
+      - "crates/wasm/**"
     branches:
       - main
 
