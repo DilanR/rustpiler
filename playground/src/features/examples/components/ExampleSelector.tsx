@@ -82,7 +82,7 @@ export function ExampleSelector({
                 }
               >
                 <div className="examples-category">
-                  {category} ▶
+                  {category}
                 </div>
 
                 {hoveredCategory ===

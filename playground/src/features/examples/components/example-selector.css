@@ -25,6 +25,7 @@
   background: var(--gb-bg0);
   color: var(--gb-fg1);
   font: inherit;
+  font-size: inherit;
 
   cursor: pointer;
 }
@@ -41,11 +42,12 @@
 
 .examples-button:hover {
   background: var(--gb-bg1);
-  color: var(--gb-aqua);
+  color: var(--gb-yellow);
 }
 
 .examples-category:hover {
   background: var(--gb-bg1);
+  color: var(--gb-yellow);
 }
 
 .examples-submenu {
@@ -81,5 +83,5 @@
 
 .examples-item:hover {
   background: var(--gb-bg1);
-  color: var(--gb-aqua);
+  color: var(--gb-yellow);
 }
