@@ -78,6 +78,7 @@ export function useWorkspace() {
     },
 
     consoleState: {
+      time_ms: compiler.result?.time_ms,
       stdout: compiler.result?.stdout ?? "",
       result: String(
         compiler.result?.result ?? ""

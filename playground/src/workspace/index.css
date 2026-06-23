@@ -41,13 +41,17 @@
 }
 
 .container-legend {
-  flex: 0 0 auto;
-  color: var(--text-primary);
-  text-align: left;
-  font-family: monospace;
-  background-color: var(--border-color);
+  display: flex;
+  align-items: center;
 
-  min-height: 0;
+  color: var(--text-primary);
+  font-family: monospace;
+
+  background-color: var(--border-color);
+}
+
+.container-legend__time {
+  margin-left: auto;
 }
 
 .output {
