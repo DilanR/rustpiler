@@ -24,8 +24,9 @@
 
   background: var(--gb-bg0);
   color: var(--gb-fg1);
-  font: inherit;
   font-size: inherit;
+
+  font-family: monospace;
 
   cursor: pointer;
 }
@@ -33,6 +34,7 @@
 .examples-button {
   padding: 0.5rem 1rem;
 
+  font-family: monospace;
   border: none;
   background: var(--panel-bg);
   color: var(--gb-fg1);
