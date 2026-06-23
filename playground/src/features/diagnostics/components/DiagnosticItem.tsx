@@ -18,6 +18,7 @@ export function DiagnosticItem({
   const Icon =
     severityIcons[diagnostic.severity];
 
+  //TODO: onClick -> setHighlighted for source code
   return (
     <div className="diagnostic">
 
