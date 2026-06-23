@@ -1,0 +1,57 @@
+.diagnostic {
+  display: flex;
+  flex-direction: column;
+
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+
+  background: var(--panel-bg);
+}
+
+.diagnostic__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  padding: 0.4rem 0.6rem;
+
+  cursor: pointer;
+}
+
+.diagnostic__header:hover {
+  background: var(--panel-bg-alt);
+  color: var(--gb-yellow);
+}
+
+.diagnostic__severity {
+  flex: 0;
+  flex-shrink: 0;
+
+  width: 1rem;
+  text-align: center;
+
+  font-weight: bold;
+}
+
+.diagnostic__message {
+  flex: 1;
+
+  font: monospace;
+  color: var(--gb-fg1);
+  font-size: 13px;
+
+  word-break: break-word;
+}
+
+.diagnostic__related {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  margin-left: 1rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+}
+
+.diagnostic__related--hint {
+  font-size: 12px;
+}
