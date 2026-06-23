@@ -74,6 +74,7 @@ export function useWorkspace() {
       selectedRoot: selectedAstNode,
       onSelect: handleAstSelect,
       onReset: handleAstReset,
+      diagnostics: compiler.diagnostics,
     },
 
     consoleState: {

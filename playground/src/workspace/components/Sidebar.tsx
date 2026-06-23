@@ -4,7 +4,8 @@ import { AstTree } from "@/features/ast";
 
 import { SidebarToolbar } from "./SidebarToolbar";
 
-import type { AstNode } from "@/types";
+import type { AstNode, Diagnostic } from "@/types";
+import { DiagnosticsView } from "@/features/diagnostics/components/DiagnosticsView";
 
 export type SidebarView =
   | "ast"
@@ -16,11 +17,13 @@ type Props = {
   selectedRoot?: AstNode;
   onSelect: (node: AstNode) => void;
   onReset: () => void;
+  diagnostics: Diagnostic[];
 };
 
 export function Sidebar({
   root,
   onSelect,
+  diagnostics,
 }: Props) {
   const [view, setView] =
     useState<SidebarView>("ast");
@@ -41,11 +44,11 @@ export function Sidebar({
       }
     >
       <SidebarToolbar
+        diagnosticsCount={diagnostics.length}
         collapsed={collapsed}
         onToggle={() =>
           setCollapsed(v => !v)
         }
-        view={view}
         onChange={setView}
       />
 
@@ -55,6 +58,12 @@ export function Sidebar({
             <AstTree
               node={root}
               onSelect={onSelect}
+            />
+          )}
+
+          {view === "diagnostics" && (
+            <DiagnosticsView
+              diagnostics={diagnostics}
             />
           )}
         </div>

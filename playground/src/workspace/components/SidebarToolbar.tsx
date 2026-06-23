@@ -1,17 +1,17 @@
 import type { SidebarView } from "./Sidebar";
 
 type Props = {
+  diagnosticsCount: number;
   collapsed: boolean;
   onToggle: () => void;
-  view: SidebarView;
   onChange: (view: SidebarView) => void;
 
 };
 
 export function SidebarToolbar({
+  diagnosticsCount,
   collapsed,
   onToggle,
-  view,
   onChange,
 
 }: Props) {
@@ -26,32 +26,26 @@ export function SidebarToolbar({
         {collapsed ? "◀" : "▶"}
       </button>
       <button
-        type="button"
-        className={
-          view === "ast"
-            ? "sidebar-toolbar__button sidebar-toolbar__button--active"
-            : "sidebar-toolbar__button"
-        }
+        className="sidebar-toolbar__button"
         onClick={() => onChange("ast")}
       >
         AST
       </button>
 
       <button
-        type="button"
-        className="sidebar-toolbar__button sidebar-toolbar__button--disabled"
-        disabled
+        className="sidebar-toolbar__button"
+        disabled={diagnosticsCount === 0}
+        onClick={() => onChange("diagnostics")}
       >
-        Diagnostics
+        DIAGNOSTICS {diagnosticsCount > 0 && (<span>{diagnosticsCount}</span>)}
       </button>
 
       <button
-        type="button"
-        className="sidebar-toolbar__button sidebar-toolbar__button--disabled"
-        disabled
+        className="sidebar-toolbar__button"
+        disabled={true}
       >
         MIPS ASM
       </button>
-    </div>
+    </div >
   );
 }
