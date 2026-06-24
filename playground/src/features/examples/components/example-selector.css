@@ -26,15 +26,12 @@
   color: var(--gb-fg1);
   font-size: inherit;
 
-  font-family: monospace;
-
   cursor: pointer;
 }
 
 .examples-button {
   padding: 0.5rem 1rem;
 
-  font-family: monospace;
   border: none;
   background: var(--panel-bg);
   color: var(--gb-fg1);

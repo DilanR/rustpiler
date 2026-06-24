@@ -1,4 +1,7 @@
-html,
+html * {
+  font-family: "JetBrains Mono";
+}
+
 body,
 #root {
   width: 100%;
@@ -20,11 +23,4 @@ body,
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-button,
-input,
-select,
-textarea {
-  font-family: monospace;
 }
