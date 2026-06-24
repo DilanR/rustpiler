@@ -247,7 +247,6 @@ impl VM {
             let (_, intrinsic) = vm_println();
             let res = intrinsic(literals, &mut self.stdout);
 
-            // TODO: proper eval of println!
             return Ok(Val::Lit(res));
         }
         let (def_depth, func) = self
@@ -276,14 +275,17 @@ impl VM {
             new_val_scope.insert(param.node.id.clone(), val);
         }
 
-        // New vm for local scope
-        let mut fn_vm = VM::new();
+        let old_functions = self.env.functions.clone();
 
-        fn_vm.env.functions = self.env.functions[..=def_depth].to_vec();
+        self.env.functions = self.env.functions[..=def_depth].to_vec();
+        self.env.values.push(new_val_scope);
 
-        fn_vm.env.values.push(new_val_scope);
+        let result = self.eval_block(&func.node.body);
 
-        fn_vm.eval_block(&func.node.body)
+        self.env.values.pop();
+        self.env.functions = old_functions;
+
+        result
     }
 
     pub fn eval_type(&mut self, expr: &Expr, ty: &Option<Type>) -> Result<Val, Error> {

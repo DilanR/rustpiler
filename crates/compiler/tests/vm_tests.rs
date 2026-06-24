@@ -247,3 +247,31 @@ mod prog_tests {
         );
     }
 }
+
+#[cfg(test)]
+mod vm_tests {
+    use compiler::{common::parse, vm::VM};
+
+    #[test]
+    fn stdout_is_shared_between_function_calls() {
+        let src = r#"
+    fn foo() {
+        println!("foo");
+    }
+    fn bar() {
+        println!("bar");
+    }
+    fn main() {
+        println!("start");
+        foo();
+        bar();
+        println!("end");
+    }"#;
+
+        let mut vm = VM::new();
+        let prog = parse(src);
+        let _ = vm.eval_prog(&prog);
+
+        assert_eq!(vm.stdout(), "start\nfoo\nbar\nend\n");
+    }
+}
