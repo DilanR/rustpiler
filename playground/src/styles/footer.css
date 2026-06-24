@@ -27,3 +27,7 @@
 .about-me__github:hover {
   color: var(--gb-yellow);
 }
+
+.color-gb-yellow {
+  color: var(--gb-yellow);
+}

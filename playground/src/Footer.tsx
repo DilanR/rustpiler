@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <section className="about-me">
       <h3 className="about-me__title">
-        A Rust Compiler Written in Rust
+        A <span className="color-gb-yellow">Rust</span> Com<span className="color-gb-yellow">piler</span> Written in Rust
       </h3>
 
       <a
