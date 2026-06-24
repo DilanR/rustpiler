@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import init, { compile } from "../pkg";
 import type { CompileResult } from "@/types";
+import { EXAMPLES } from "@/features/examples/constants";
 
 export function useRustpiler() {
   const [ready, setReady] = useState(false);
@@ -8,11 +9,7 @@ export function useRustpiler() {
   const [result, setResult] =
     useState<CompileResult | null>(null);
 
-  const [code, setCode] = useState(`fn main() -> i32 {
-    let mut x = 1;
-    x = x + 1;
-    x
-  }`);
+  const [code, setCode] = useState<string>(EXAMPLES.gcd.code);
 
   useEffect(() => {
     init()
