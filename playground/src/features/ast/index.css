@@ -53,3 +53,98 @@
 .ast-graph {
   display: block;
 }
+
+.ast-tree {
+  margin: 0;
+  padding-left: 1rem;
+
+  list-style: none;
+
+  font-family: monospace;
+}
+
+.ast-tree__node {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  padding: 2px 4px;
+
+  border-radius: 4px;
+
+  cursor: pointer;
+
+  transition: background-color 150ms ease;
+}
+
+.ast-tree__node:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ast-tree__arrow {
+  width: 1rem;
+
+  color: #888;
+
+  user-select: none;
+}
+
+.ast-tree__label--prog {
+  color: #56b6c2;
+}
+
+.ast-tree__label--function {
+  color: #d19a66;
+}
+
+.ast-tree__label--ident {
+  color: #61afef;
+}
+
+.ast-tree__label--literal {
+  color: #98c379;
+}
+
+.ast-tree__label--binop {
+  color: #e5c07b;
+}
+
+.ast-tree__label--type {
+  color: #c678dd;
+}
+
+.ast-tree__label--stmt {
+  color: #e06c75;
+}
+
+.ast-tree__label--call {
+  color: #56b6c2;
+}
+
+.ast-tree__label--block {
+  color: #abb2bf;
+}
+
+.ast-tree__label--expr {
+  color: #abb2bf;
+}
+
+.ast-tree__label--param {
+  color: #d19a66;
+}
+
+.ast-tree__label--unop {
+  color: #e5c07b;
+}
+
+.ast-tree__span {
+  color: #777;
+  font-size: 0.8em;
+}
+
+.ast-tree__children {
+  margin-left: 0.5rem;
+  padding-left: 0.75rem;
+
+  border-left: 1px solid #444;
+}
