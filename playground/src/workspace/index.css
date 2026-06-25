@@ -16,13 +16,6 @@
   min-height: 0;
 }
 
-.sidebar {
-  max-height: var(--content-dvh);
-  flex-shrink: 0;
-  overflow-y: auto;
-  min-height: 0;
-}
-
 
 .main {
   display: flex;
@@ -83,8 +76,9 @@
 
 .sidebar__content {
   flex: 1;
-  overflow: hidden;
   padding: 0.5rem;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .sidebar-toolbar {
@@ -148,12 +142,6 @@
 .sidebar-toolbar__button--disabled:hover {
   background: var(--panel-bg);
   color: var(--text-secondary);
-}
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
 }
 
 .sidebar--collapsed {
