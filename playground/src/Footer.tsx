@@ -5,7 +5,15 @@ export function Footer() {
   return (
     <section className="about-me">
       <h3 className="about-me__title">
-        A <span className="color-gb-yellow">Rust</span> Com<span className="color-gb-yellow">piler</span> Written in Rust
+        <span className="fade">A&nbsp;</span>
+
+        <span className="color-gb-yellow">Rust</span>
+
+        <span className="fade">&nbsp;Com</span>
+
+        <span className="color-gb-yellow">piler </span>
+
+        <span className="fade"> Written in Rust</span>
       </h3>
 
       <a

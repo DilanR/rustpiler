@@ -10,10 +10,17 @@
   border-radius: 5px;
 }
 
+.about-me:hover .fade {
+  opacity: 0;
+  max-width: 0;
+  margin: 0;
+}
+
 .about-me__title {
   margin: 0;
   color: var(--gb-fg2);
   font-size: 1rem;
+  white-space: nowrap;
 }
 
 .about-me__github {
@@ -30,4 +37,14 @@
 
 .color-gb-yellow {
   color: var(--gb-yellow);
+}
+
+.about-me__title .fade {
+  display: inline-block;
+  opacity: 1;
+  max-width: 20em;
+  transition:
+    opacity .25s ease,
+    max-width .65s ease,
+    margin .25s ease;
 }
